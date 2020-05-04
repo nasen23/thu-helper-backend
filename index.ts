@@ -3,6 +3,7 @@ import * as bodyParser from 'body-parser'
 import router from './router'
 import { createConnection } from 'typeorm'
 import * as morgan from 'morgan'
+import * as session from 'express-session'
 
 createConnection()
   .then(_ => {
@@ -11,7 +12,21 @@ createConnection()
     app.use(morgan('dev'))
     app.use(bodyParser.json())
 
+    app.use(
+      session({
+        secret: 'thu_helper',
+        cookie: { maxAge: 60000 },
+        resave: false,
+        saveUninitialized: false,
+      })
+    )
+
     app.use(router)
+
+    // catching 404
+    app.use((_, res) => {
+      res.status(404).send('Not Found')
+    })
 
     app.listen(process.env.PORT || 3000, () => {
       console.log('App running on port 3000')

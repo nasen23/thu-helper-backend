@@ -6,11 +6,14 @@ export class User {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ length: 30 })
+  @Column({ length: 10 })
   username: string
 
   @Column({ length: 32 })
   password: string
+
+  @Column({ length: 11 })
+  phone: string
 
   @Column({ length: 6, nullable: true })
   realname: string
@@ -29,9 +32,6 @@ export class User {
 
   @Column({ length: 20, nullable: true })
   dormitory: string
-
-  @Column({ length: 11, nullable: true })
-  phone: string
 
   @Column({ length: 50, nullable: true })
   wechat: string
