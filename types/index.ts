@@ -12,8 +12,8 @@ export class ReqRegister {
 }
 
 export class ReqLogin {
-  @Length(11, 11)
-  phone: string
+  @Length(2, 10)
+  username: string
 
   @Length(5, 16)
   password: string
