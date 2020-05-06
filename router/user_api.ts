@@ -65,7 +65,7 @@ router.get('/:uid', checkJWT, async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
   } catch (err) {
-    return res.status(404).json({ error: err })
+    return res.status(400).json({ error: 'Incorrect user id format' })
   }
 })
 
