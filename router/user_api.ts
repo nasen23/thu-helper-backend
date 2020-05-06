@@ -9,7 +9,7 @@ router.post('/register', async (req, res) => {
   const data = <ReqRegister>req.body
   if (data) {
     if (!data.phone || !data.username || !data.password) {
-      return res.status(422)
+      return res.sendStatus(422)
     }
 
     const users = getConnection().getRepository(User)
