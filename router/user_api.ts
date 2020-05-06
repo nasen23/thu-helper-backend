@@ -5,6 +5,7 @@ import { ReqRegister, ReqLogin } from '../types'
 import { validateOrReject } from 'class-validator'
 import { plainToClass } from 'class-transformer'
 import { JWT, checkJWT } from './auth'
+import { sha256 } from 'js-sha256'
 
 const router = Router()
 
@@ -23,8 +24,8 @@ router.post('/register', async (req, res) => {
   ) {
     return res.status(403).json({ error: 'Cannot register twice' })
   }
-  // TODO: hash the password to store in database
   const user = users.create(data)
+  user.password = sha256(user.password)
   const results = await users.save(user)
   return res.json(results)
 })
@@ -40,7 +41,7 @@ router.post('/login', async (req, res) => {
   const users = getConnection().getRepository(User)
   const user = await users.findOne({ phone: data.phone })
   if (user) {
-    if (user.password === data.password) {
+    if (user.password === sha256(data.password)) {
       const jwt = new JWT(user)
       return res.status(201).json(jwt.jsonResponse())
     } else {

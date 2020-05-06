@@ -9,7 +9,7 @@ export class User {
   @Column({ length: 10 })
   username: string
 
-  @Column({ length: 32 })
+  @Column({ length: 64 })
   password: string
 
   @Column({ length: 11 })
