@@ -1,7 +1,7 @@
 import { User } from '../entity/user'
 import { Router } from 'express'
 import { getConnection } from 'typeorm'
-import { ReqRegister } from '../types'
+import { ReqRegister, ReqLogin } from '../types'
 import { validateOrReject } from 'class-validator'
 import { plainToClass } from 'class-transformer'
 
@@ -12,7 +12,7 @@ router.post('/register', async (req, res) => {
   try {
     await validateOrReject(data)
   } catch (errors) {
-    return res.sendStatus(400)
+    return res.status(400).json({ error: 'Invalid request body' })
   }
   const users = getConnection().getRepository(User)
   if (await users.findOne({ phone: data.phone })) {
@@ -23,7 +23,25 @@ router.post('/register', async (req, res) => {
   return res.json(results)
 })
 
-router.post('/login', async (req, res) => {})
+router.post('/login', async (req, res) => {
+  const data = plainToClass(ReqLogin, req.body)
+  try {
+    await validateOrReject(data)
+  } catch (err) {
+    return res.status(400).json({ error: err })
+  }
+  const users = getConnection().getRepository(User)
+  const user = await users.findOne({ username: data.username })
+  if (user) {
+    if (user.password === data.password) {
+      return res.status(201).json({ msg: 'Login succeeded' })
+    } else {
+      return res.status(400).json({ msg: 'Wrong password' })
+    }
+  } else {
+    return res.status(404).json({ error: `User ${data.username} not found` })
+  }
+})
 
 router.get('/:uid', async (req, res) => {
   try {
@@ -33,10 +51,10 @@ router.get('/:uid', async (req, res) => {
     if (user) {
       return res.json(user)
     } else {
-      return res.sendStatus(404)
+      return res.status(404).json({ error: 'User not found' })
     }
   } catch (err) {
-    return res.sendStatus(400)
+    return res.status(404).json({ error: err })
   }
 })
 
