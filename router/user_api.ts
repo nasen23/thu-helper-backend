@@ -16,7 +16,11 @@ router.post('/register', async (req, res) => {
     return res.sendStatus(400)
   }
   const users = getConnection().getRepository(User)
-  if (await users.findOne({ phone: data.phone })) {
+  if (
+    await users.findOne({
+      where: [{ phone: data.phone }, { username: data.username }],
+    })
+  ) {
     return res.status(403).json({ error: 'Cannot register twice' })
   }
   // TODO: hash the password to store in database
@@ -49,10 +53,11 @@ router.post('/login', async (req, res) => {
 
 router.get('/:uid', checkJWT, async (req, res) => {
   try {
-    const uid = parseInt(req.param['uid'])
+    const uid = parseInt(req.params['uid'])
     const users = getConnection().getRepository(User)
     const user = await users.findOne({ id: uid })
     if (user) {
+      // TODO: don't return password
       return res.json(user)
     } else {
       return res.sendStatus(404)
