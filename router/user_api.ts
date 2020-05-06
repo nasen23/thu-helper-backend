@@ -13,7 +13,7 @@ router.post('/register', async (req, res) => {
   try {
     await validateOrReject(data)
   } catch (errors) {
-    return res.sendStatus(400)
+    return res.status(400).json({ error: 'Invalid request body' })
   }
   const users = getConnection().getRepository(User)
   if (
@@ -34,7 +34,7 @@ router.post('/login', async (req, res) => {
   try {
     await validateOrReject(data)
   } catch (errors) {
-    return res.sendStatus(400)
+    return res.status(400).json({ error: 'Invalid request body' })
   }
 
   const users = getConnection().getRepository(User)
@@ -60,10 +60,10 @@ router.get('/:uid', checkJWT, async (req, res) => {
       // TODO: don't return password
       return res.json(user)
     } else {
-      return res.sendStatus(404)
+      return res.status(404).json({ error: 'User not found' })
     }
   } catch (err) {
-    return res.sendStatus(400)
+    return res.status(404).json({ error: err })
   }
 })
 
