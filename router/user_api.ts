@@ -6,10 +6,11 @@ import { validateOrReject } from 'class-validator'
 import { plainToClass } from 'class-transformer'
 import { JWT, checkJWT } from './auth'
 import { sha256 } from 'js-sha256'
+import { urlencoded } from 'body-parser'
 
 const router = Router()
 
-router.post('/register', async (req, res) => {
+router.post('/register', urlencoded({ extended: true }), async (req, res) => {
   const data = plainToClass(ReqRegister, req.body)
   try {
     await validateOrReject(data)
@@ -27,10 +28,10 @@ router.post('/register', async (req, res) => {
   const user = users.create(data)
   user.password = sha256(user.password)
   const results = await users.save(user)
-  return res.json(results)
+  return res.status(201).json(results)
 })
 
-router.post('/login', async (req, res) => {
+router.post('/login', urlencoded({ extended: true }), async (req, res) => {
   const data = plainToClass(ReqLogin, req.body)
   try {
     await validateOrReject(data)
@@ -39,7 +40,7 @@ router.post('/login', async (req, res) => {
   }
 
   const users = getConnection().getRepository(User)
-  const user = await users.findOne({ phone: data.phone })
+  const user = await users.findOne({ username: data.username })
   if (user) {
     if (user.password === sha256(data.password)) {
       const jwt = new JWT(user)
