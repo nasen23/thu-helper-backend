@@ -12,6 +12,20 @@ createConnection()
 
     app.use(morgan('dev'))
     app.use(bodyParser.json())
+    app.use(
+      (
+        err: Error,
+        _req: express.Request,
+        res: express.Response,
+        next: express.NextFunction
+      ) => {
+        if (err instanceof SyntaxError) {
+          res.sendStatus(400)
+        } else {
+          next()
+        }
+      }
+    )
 
     app.use(
       session({
