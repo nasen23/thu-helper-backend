@@ -4,6 +4,7 @@ import router from './router'
 import { createConnection } from 'typeorm'
 import * as morgan from 'morgan'
 import * as session from 'express-session'
+import 'reflect-metadata'
 
 createConnection()
   .then(_ => {

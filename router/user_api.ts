@@ -2,26 +2,25 @@ import { User } from '../entity/user'
 import { Router } from 'express'
 import { getConnection } from 'typeorm'
 import { ReqRegister } from '../types'
+import { validateOrReject } from 'class-validator'
+import { plainToClass } from 'class-transformer'
 
 const router = Router()
 
 router.post('/register', async (req, res) => {
-  const data = <ReqRegister>req.body
-  if (data) {
-    if (!data.phone || !data.username || !data.password) {
-      return res.sendStatus(422)
-    }
-
-    const users = getConnection().getRepository(User)
-    if (await users.findOne({ phone: data.phone })) {
-      return res.status(422).json({ error: 'Cannot register twice' })
-    }
-    const user = users.create(data)
-    const results = await users.save(user)
-    return res.json(results)
-  } else {
+  const data = plainToClass(ReqRegister, req.body)
+  try {
+    await validateOrReject(data)
+  } catch (errors) {
     return res.sendStatus(400)
   }
+  const users = getConnection().getRepository(User)
+  if (await users.findOne({ phone: data.phone })) {
+    return res.status(403).json({ error: 'Cannot register twice' })
+  }
+  const user = users.create(data)
+  const results = await users.save(user)
+  return res.json(results)
 })
 
 router.post('/login', async (req, res) => {})
