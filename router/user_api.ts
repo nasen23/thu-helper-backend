@@ -40,7 +40,7 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
   }
 
   const users = getConnection().getRepository(User)
-  const user = await users.findOne({ username: data.username })
+  const user = await users.findOne({ phone: data.phone })
   if (user) {
     if (user.password === sha256(data.password)) {
       const jwt = new JWT(user)
