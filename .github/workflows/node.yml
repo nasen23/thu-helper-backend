@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12'
+      - uses: harmon758/postgresql-action@v1
+        with:
+          postgresql db: 'thu_helper'
+          postgresql user: 'postgres'
+          postgresql password: '1017'
+      - run: yarn install
+      - run: yarn build
