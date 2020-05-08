@@ -1,0 +1,25 @@
+version: '3'
+services:
+  thu-helper:
+    build: .
+    container_name: thu-helper
+    ports:
+      - 3000:3000
+    restart: always
+    depends_on:
+      - pgdb
+    links:
+      - pgdb
+
+  pgdb:
+    image: postgres
+    restart: always
+    container_name: pgdb
+    expose:
+      - 5432
+    environment:
+      POSTGRES_DB: thu_helper
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1017
+    volumes:
+      - ~/data/postgres_data:/var/lib/postgresql/data

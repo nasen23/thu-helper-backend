@@ -1,24 +1,18 @@
 {
-   "type": "postgres",
-   "host": "localhost",
-   "port": 5432,
-   "username": "postgres",
-   "password": "1017",
-   "database": "thu_helper",
-   "synchronize": true,
-   "logging": false,
-   "entities": [
-      "entity/**/*.ts"
-   ],
-   "migrations": [
-      "migration/**/*.ts"
-   ],
-   "subscribers": [
-      "subscriber/**/*.ts"
-   ],
-   "cli": {
-      "entitiesDir": "entity",
-      "migrationsDir": "migration",
-      "subscribersDir": "subscriber"
-   }
+  "type": "postgres",
+  "host": "pgdb",
+  "port": 5432,
+  "username": "postgres",
+  "password": "1017",
+  "database": "thu_helper",
+  "synchronize": true,
+  "logging": false,
+  "entities": ["entity/**/*.ts"],
+  "migrations": ["migration/**/*.ts"],
+  "subscribers": ["subscriber/**/*.ts"],
+  "cli": {
+    "entitiesDir": "entity",
+    "migrationsDir": "migration",
+    "subscribersDir": "subscriber"
+  }
 }
