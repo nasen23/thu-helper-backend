@@ -28,7 +28,9 @@ router.post('/register', urlencoded({ extended: true }), async (req, res) => {
   const user = users.create(data)
   user.password = sha256(user.password)
   const results = await users.save(user)
-  return res.status(201).json(results)
+  return res.status(201).json({
+    id: results.id,
+  })
 })
 
 router.post('/login', urlencoded({ extended: true }), async (req, res) => {
@@ -56,16 +58,41 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
 router.get('/:uid', checkJWT, async (req, res) => {
   try {
     const uid = parseInt(req.params['uid'])
+
     const users = getConnection().getRepository(User)
     const user = await users.findOne({ id: uid })
     if (user) {
-      // TODO: don't return password
-      return res.json(user)
+      // return some simple and minimal information here
+      return res.json({
+        id: user.id,
+        username: user.username,
+      })
     } else {
       return res.status(404).json({ error: 'User not found' })
     }
   } catch (err) {
-    return res.status(400).json({ error: 'Incorrect user id format' })
+    return res.status(400).json({ error: 'Bad request params' })
+  }
+})
+
+router.get('/:uid/profile', checkJWT, async (req, res) => {
+  let uid: number
+  try {
+    uid = parseInt(req.params['uid'])
+  } catch (err) {
+    return res.status(400).json({ error: 'Bad request params' })
+  }
+
+  const users = getConnection().getRepository(User)
+  const user = await users.findOne({ id: uid })
+  if (user) {
+    // return anything except password
+    return res.json({
+      ...user,
+      password: undefined,
+    })
+  } else {
+    return res.status(404).json({ error: 'User not found' })
   }
 })
 

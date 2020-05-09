@@ -18,9 +18,6 @@ export class User {
   @Column({ length: 6, nullable: true })
   realname: string
 
-  @Column({ length: 100, nullable: true })
-  avatarUrl: string
-
   @Column({ nullable: true })
   signature: string
 
