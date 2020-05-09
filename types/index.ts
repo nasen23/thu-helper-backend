@@ -1,4 +1,10 @@
-import { Length } from 'class-validator'
+import {
+  Length,
+  MaxLength,
+  IsOptional,
+  IsPhoneNumber,
+  IsIn,
+} from 'class-validator'
 
 export class ReqRegister {
   @Length(11, 11)
@@ -12,9 +18,39 @@ export class ReqRegister {
 }
 
 export class ReqLogin {
-  @Length(11, 11)
+  @IsPhoneNumber('CH')
   phone: string
 
   @Length(5, 16)
   password: string
+}
+
+export class ReqSetProfile {
+  @IsOptional()
+  @Length(1, 6)
+  realname?: string
+
+  @IsOptional()
+  @MaxLength(200)
+  signature?: string
+
+  @IsOptional()
+  @Length(2, 20)
+  department?: string
+
+  @IsOptional()
+  @IsIn(['大一', '大二', '大三', '大四'])
+  grade?: string
+
+  @IsOptional()
+  @Length(2, 10)
+  dormitory?: string
+
+  @IsOptional()
+  @Length(2, 30)
+  wechat?: string
+
+  @IsOptional()
+  @Length(4, 40)
+  email?: string
 }

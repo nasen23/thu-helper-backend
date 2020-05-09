@@ -7,6 +7,8 @@ import { plainToClass } from 'class-transformer'
 import { JWT, checkJWT } from './auth'
 import { sha256 } from 'js-sha256'
 import { urlencoded } from 'body-parser'
+import * as path from 'path'
+import { staticDir } from '../config'
 
 const router = Router()
 
@@ -93,6 +95,26 @@ router.get('/:uid/profile', checkJWT, async (req, res) => {
     })
   } else {
     return res.status(404).json({ error: 'User not found' })
+  }
+})
+
+router.get('/:uid/avatar', checkJWT, (req, res) => {
+  try {
+    const id = parseInt(req.params['uid'])
+    const filename = id.toString() + '.png'
+    return res.sendFile(
+      filename,
+      {
+        root: path.join(staticDir, 'avatar'),
+      },
+      err => {
+        if (err) {
+          res.status(404).json({ error: 'Avatar not found' })
+        }
+      }
+    )
+  } catch (err) {
+    return res.status(400).json({ error: 'Invalid request params' })
   }
 })
 
