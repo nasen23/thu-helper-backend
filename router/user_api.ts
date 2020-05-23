@@ -17,6 +17,7 @@ router.post('/register', urlencoded({ extended: true }), async (req, res) => {
   try {
     await validateOrReject(data)
   } catch (errors) {
+    console.log(errors)
     return res.status(400).json({ error: 'Invalid request body' })
   }
   const users = getConnection().getRepository(User)
@@ -40,6 +41,7 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
   try {
     await validateOrReject(data)
   } catch (errors) {
+    console.log(errors)
     return res.status(400).json({ error: 'Invalid request body' })
   }
 
@@ -48,7 +50,10 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
   if (user) {
     if (user.password === sha256(data.password)) {
       const jwt = new JWT(user)
-      return res.status(201).json(jwt.jsonResponse())
+      return res.status(201).json({
+        token: jwt.token,
+        userId: user.id
+      })
     } else {
       return res.status(403).json({ error: 'Incorrect password' })
     }
@@ -73,6 +78,7 @@ router.get('/:uid', checkJWT, async (req, res) => {
       return res.status(404).json({ error: 'User not found' })
     }
   } catch (err) {
+    console.log(err)
     return res.status(400).json({ error: 'Bad request params' })
   }
 })
@@ -114,6 +120,7 @@ router.get('/:uid/avatar', checkJWT, (req, res) => {
       }
     )
   } catch (err) {
+    console.log(err)
     return res.status(400).json({ error: 'Invalid request params' })
   }
 })
