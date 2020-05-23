@@ -2,11 +2,12 @@ import {
   Length,
   MaxLength,
   IsOptional,
-  IsPhoneNumber,
   IsIn,
+  IsNumberString,
 } from 'class-validator'
 
 export class ReqRegister {
+  @IsNumberString()
   @Length(11, 11)
   phone: string
 
@@ -18,7 +19,8 @@ export class ReqRegister {
 }
 
 export class ReqLogin {
-  @IsPhoneNumber('CH')
+  @IsNumberString()
+  @Length(11, 11)
   phone: string
 
   @Length(5, 16)
