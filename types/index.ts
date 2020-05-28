@@ -56,3 +56,46 @@ export class ReqSetProfile {
   @Length(4, 40)
   email?: string
 }
+
+export class ReqNewTask {
+  @Length(2, 20)
+  title: string
+
+  @IsIn(['community', 'meal', 'study', 'questionnaire'])
+  type: string
+
+  @IsOptional()
+  duration: string
+
+  description: string
+
+  reward: string
+
+  start_time: string
+
+  @IsOptional()
+  end_time: string
+
+  @IsOptional()
+  times_per_user: number
+
+  @IsOptional()
+  times_total: number
+
+  review_time: string
+
+  @IsOptional()
+  site: string
+
+  @IsOptional()
+  food_num: number
+
+  @IsOptional()
+  subjects: string
+
+  @IsOptional()
+  demands: string
+
+  @IsOptional()
+  link: string
+}
