@@ -11,6 +11,7 @@ import { User } from "../entity/user"
 const router = Router()
 
 router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  console.log(req.body)
   const data = plainToClass(ReqNewTask, req.body)
   try {
     await validateOrReject(data)
@@ -28,16 +29,31 @@ router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res)
 
   const tasks = getConnection().getRepository(Task)
   const task = tasks.create(data)
-  const result = await tasks.save(task)
-  return res.status(201).json({ id: result.id })
+  try {
+    let result = await tasks.save(task)
+    if (result.duration && !result.end_time) {
+      result.end_time = result.start_time + result.duration
+    }
+    console.log(result)
+    return res.status(201).json({ id: result.id })
+  } catch (err) {
+    console.log(err)
+  }
+  console.log("000")
 })
 
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
   let tasks: Task[] = await getConnection().getRepository(Task).find()
   for (let task of tasks) {
     console.log(task)
+    console.log(typeof (task))
   }
   return res.status(200).json({ tasks })
+})
+
+router.post('/delete/all', [urlencoded({ extended: true })], async (req, res) => {
+  await getConnection().getRepository(Task).clear()
+  return res.status(201).json({ delete: 'success' })
 })
 
 export default router

@@ -64,16 +64,12 @@ export class ReqNewTask {
   @IsIn(['community', 'meal', 'study', 'questionnaire'])
   type: string
 
-  @IsOptional()
-  duration: string
-
   description: string
 
-  reward: string
+  reward: number
 
   start_time: string
 
-  @IsOptional()
   end_time: string
 
   @IsOptional()

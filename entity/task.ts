@@ -17,7 +17,7 @@ export class Task {
   @Column()
   description: string
 
-  @Column({ length: 10 })
+  @Column('real')
   reward: string
 
   @Column()
@@ -29,14 +29,11 @@ export class Task {
   @Column()
   is_paid: boolean
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @Column()
   start_time: string
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column()
   end_time: string
-
-  @Column('interval', { nullable: true })
-  duration: string
 
   // number of times each user can finish this task
   @Column({ nullable: true })
@@ -49,6 +46,9 @@ export class Task {
   // employer review time
   @Column({ type: 'interval' })
   review_time: string
+
+  @Column({ nullable: true })
+  publisherId: number
 
   @ManyToOne(type => User, publisher => publisher.tasks)
   publisher: User
