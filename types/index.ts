@@ -66,7 +66,7 @@ export class ReqNewTask {
 
   description: string
 
-  reward: number
+  reward: string
 
   start_time: string
 

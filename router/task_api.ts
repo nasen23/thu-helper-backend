@@ -1,4 +1,4 @@
-import { Router } from "express"
+import { Router, response } from "express"
 import { urlencoded } from "body-parser"
 import { ReqNewTask } from "../types"
 import { plainToClass } from "class-transformer"
@@ -11,7 +11,6 @@ import { User } from "../entity/user"
 const router = Router()
 
 router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  console.log(req.body)
   const data = plainToClass(ReqNewTask, req.body)
   try {
     await validateOrReject(data)
@@ -31,24 +30,24 @@ router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res)
   const task = tasks.create(data)
   try {
     let result = await tasks.save(task)
-    if (result.duration && !result.end_time) {
-      result.end_time = result.start_time + result.duration
-    }
-    console.log(result)
     return res.status(201).json({ id: result.id })
   } catch (err) {
     console.log(err)
   }
-  console.log("000")
 })
 
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
-  let tasks: Task[] = await getConnection().getRepository(Task).find()
-  for (let task of tasks) {
-    console.log(task)
-    console.log(typeof (task))
+  const type: string = req.query['type']
+  const repository = await getConnection().getRepository(Task)
+  if (!type) {
+    const tasks = await repository.find()
+    return res.status(200).json({ tasks })
+  } else if (['community', 'meal', 'study', 'questionnaire'].indexOf(type) != -1) {
+    const tasks = await repository.find({ type: type })
+    return res.status(200).json({ tasks })
+  } else {
+    return res.status(400).json({ error: 'Invalid query parameters' })
   }
-  return res.status(200).json({ tasks })
 })
 
 router.post('/delete/all', [urlencoded({ extended: true })], async (req, res) => {

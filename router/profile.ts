@@ -57,7 +57,7 @@ router.post(
         console.log(err)
         res.sendStatus(500)
       } else {
-        res.sendStatus(200)
+        res.sendStatus(201)
       }
     })
   }
