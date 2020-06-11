@@ -14,7 +14,7 @@ export class ReqRegister {
   @Length(5, 16)
   password: string
 
-  @Length(2, 10)
+  @Length(2, 20)
   username: string
 }
 
@@ -33,7 +33,7 @@ export class ReqSetProfile {
   realname?: string
 
   @IsOptional()
-  @MaxLength(200)
+  @MaxLength(40)
   signature?: string
 
   @IsOptional()

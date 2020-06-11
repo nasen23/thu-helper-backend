@@ -146,4 +146,26 @@ router.get('/:uid/background', checkJWT, (req, res) => {
   }
 })
 
+router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const data = req.body
+  const users = getConnection().getRepository(User)
+  const user = await users.findOne(res.locals.userid)
+
+  const fields = ['username', 'signature']
+
+  console.log(user)
+
+  for (const field of fields) {
+    if (data[field]) {
+      user[field] = data[field]
+    }
+  }
+
+  await users.save(user)
+
+  console.log(user)
+
+  return res.status(201).json({ msg: 'succeeded!' })
+})
+
 export default router
