@@ -11,8 +11,21 @@ import * as multer from 'multer'
 import { staticDir } from '../config'
 
 const router = Router()
-const upload = multer({
+const avatarUpload = multer({
   dest: path.join(staticDir, 'avatar'),
+  fileFilter: (_, file, callback) => {
+    const extname = path.extname(file.originalname).toLowerCase()
+    if (['.png', '.jpg', '.jpeg'].includes(extname)) {
+      return callback(null, true)
+    }
+    callback(new Error('Only images are allowed'))
+  },
+  limits: {
+    fileSize: 512 * 1024,
+  },
+})
+const bgUpload = multer({
+  dest: path.join(staticDir, 'background'),
   fileFilter: (_, file, callback) => {
     const extname = path.extname(file.originalname).toLowerCase()
     if (['.png', '.jpg', '.jpeg'].includes(extname)) {
@@ -45,13 +58,43 @@ router.post('/', checkJWT, async (req, res) => {
 
 router.post(
   '/avatar',
-  [checkJWT, upload.single('file')],
+  [checkJWT, avatarUpload.single('file')],
   (req: Request, res: Response) => {
     const id = res.locals.userid
     const filename = id + '.png'
     const dir = path.join(staticDir, 'avatar')
     const oldFilepath = path.join(dir, req.file.filename)
     const filepath = path.join(dir, filename)
+    fs.exists(filepath, exists => {
+      if (exists) {
+        fs.unlinkSync(filepath)
+      }
+    })
+    fs.rename(oldFilepath, filepath, err => {
+      if (err) {
+        console.log(err)
+        res.sendStatus(500)
+      } else {
+        res.sendStatus(201)
+      }
+    })
+  }
+)
+
+router.post(
+  '/background',
+  [checkJWT, bgUpload.single('file')],
+  (req: Request, res: Response) => {
+    const id = res.locals.userid
+    const filename = 'bg' + id + '.png'
+    const dir = path.join(staticDir, 'background')
+    const oldFilepath = path.join(dir, req.file.filename)
+    const filepath = path.join(dir, filename)
+    fs.exists(filepath, exists => {
+      if (exists) {
+        fs.unlinkSync(filepath)
+      }
+    })
     fs.rename(oldFilepath, filepath, err => {
       if (err) {
         console.log(err)

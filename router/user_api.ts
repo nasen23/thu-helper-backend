@@ -125,4 +125,25 @@ router.get('/:uid/avatar', checkJWT, (req, res) => {
   }
 })
 
+router.get('/:uid/background', checkJWT, (req, res) => {
+  try {
+    const id = parseInt(req.params['uid'])
+    const filename = 'bg' + id.toString() + '.png'
+    return res.sendFile(
+      filename,
+      {
+        root: path.join(staticDir, 'background'),
+      },
+      err => {
+        if (err) {
+          res.status(404).json({ error: 'Background not found' })
+        }
+      }
+    )
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({ error: 'Invalid request params' })
+  }
+})
+
 export default router
