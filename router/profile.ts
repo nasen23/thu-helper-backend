@@ -70,11 +70,15 @@ router.post(
         fs.unlinkSync(filepath)
       }
     })
-    fs.rename(oldFilepath, filepath, err => {
+    fs.rename(oldFilepath, filepath, async err => {
       if (err) {
         console.log(err)
         res.sendStatus(500)
       } else {
+        let users = getConnection().getRepository(User)
+        let user = await users.findOne(id)
+        user.avatar_ts = Date.parse(new Date().toString()).toString()
+        await users.save(user)
         res.sendStatus(201)
       }
     })
@@ -95,11 +99,15 @@ router.post(
         fs.unlinkSync(filepath)
       }
     })
-    fs.rename(oldFilepath, filepath, err => {
+    fs.rename(oldFilepath, filepath, async err => {
       if (err) {
         console.log(err)
         res.sendStatus(500)
       } else {
+        let users = getConnection().getRepository(User)
+        let user = await users.findOne(id)
+        user.bg_ts = Date.parse(new Date().toString()).toString()
+        await users.save(user)
         res.sendStatus(201)
       }
     })

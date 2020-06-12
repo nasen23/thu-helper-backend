@@ -38,4 +38,12 @@ export class User {
 
   @OneToMany(type => Task, task => task.publisher)
   tasks: Task[]
+
+  // timestamp of the last avatar modification time
+  @Column({ default: '' })
+  avatar_ts: string
+
+  // timestamp of the last profile background modification time
+  @Column({ default: '' })
+  bg_ts: string
 }

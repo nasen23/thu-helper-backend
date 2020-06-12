@@ -83,7 +83,7 @@ router.get('/:uid', checkJWT, async (req, res) => {
   }
 })
 
-router.get('/:uid/profile', checkJWT, async (req, res) => {
+router.get('/:uid/profile', async (req, res) => {
   let uid: number
   try {
     uid = parseInt(req.params['uid'])
@@ -93,12 +93,19 @@ router.get('/:uid/profile', checkJWT, async (req, res) => {
 
   const users = getConnection().getRepository(User)
   const user = await users.findOne({ id: uid })
+  delete user.password
   if (user) {
     // return anything except password
-    return res.json({
-      ...user,
-      password: undefined,
-    })
+    if (Object.keys(req.query).length !== 0) {
+      let result = {}
+      for (const key in req.query) {
+        if (user.hasOwnProperty(key)) {
+          result[key] = user[key]
+        }
+      }
+      return res.json(result)
+    }
+    return res.json({ ...user })
   } else {
     return res.status(404).json({ error: 'User not found' })
   }
