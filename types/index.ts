@@ -78,7 +78,7 @@ export class ReqNewTask {
   @IsOptional()
   times_total: number
 
-  review_time: string
+  review_time: number
 
   @IsOptional()
   site: string

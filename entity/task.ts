@@ -43,9 +43,13 @@ export class Task {
   @Column({ nullable: true })
   times_total: number
 
+  // number of times the task has been finished
+  @Column({ nullable: true })
+  times_finished: number
+
   // employer review time
-  @Column({ type: 'interval' })
-  review_time: string
+  @Column()
+  review_time: number
 
   @Column({ nullable: true })
   publisherId: number
@@ -69,7 +73,7 @@ export class Task {
   @Column({ nullable: true })
   subjects: string
 
-  /* for quetionnaire tasks */
+  /* for questionnaire tasks */
 
   // demands for filling out the questionnaire
   @Column({ nullable: true })
