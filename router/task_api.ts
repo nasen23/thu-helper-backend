@@ -36,11 +36,25 @@ router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res)
   }
 })
 
+router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const id = req.query['id']
+  const tasks = getConnection().getRepository(Task)
+  const task = await tasks.findOne(id)
+
+  if (task) {
+    console.log(task)
+    return res.json({ task })
+  } else {
+    return res.status(404).json({ error: 'Task not found' })
+  }
+})
+
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
   const type: string = req.query['type']
   const repository = await getConnection().getRepository(Task)
   if (!type) {
     const tasks = await repository.find()
+    await repository.save(tasks)
     return res.status(200).json({ tasks })
   } else if (['community', 'meal', 'study', 'questionnaire'].indexOf(type) != -1) {
     const tasks = await repository.find({ type: type })
