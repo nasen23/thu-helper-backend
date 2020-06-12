@@ -104,7 +104,7 @@ router.get('/:uid/profile', checkJWT, async (req, res) => {
   }
 })
 
-router.get('/:uid/avatar', checkJWT, (req, res) => {
+router.get('/:uid/avatar', (req, res) => {
   try {
     const id = parseInt(req.params['uid'])
     const filename = id.toString() + '.png'
@@ -125,7 +125,7 @@ router.get('/:uid/avatar', checkJWT, (req, res) => {
   }
 })
 
-router.get('/:uid/background', checkJWT, (req, res) => {
+router.get('/:uid/background', (req, res) => {
   try {
     const id = parseInt(req.params['uid'])
     const filename = 'bg' + id.toString() + '.png'
@@ -153,8 +153,6 @@ router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, r
 
   const fields = ['username', 'signature']
 
-  console.log(user)
-
   for (const field of fields) {
     if (data[field]) {
       user[field] = data[field]
@@ -162,9 +160,6 @@ router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, r
   }
 
   await users.save(user)
-
-  console.log(user)
-
   return res.status(201).json({ msg: 'succeeded!' })
 })
 
