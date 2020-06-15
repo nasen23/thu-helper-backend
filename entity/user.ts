@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, RelationId, ManyToMany, JoinTable } from 'typeorm'
 import { Task } from './task'
 
 @Entity()
@@ -36,8 +36,29 @@ export class User {
   @Column({ length: 50, nullable: true })
   email: string
 
-  @OneToMany(type => Task, task => task.publisher)
-  tasks: Task[]
+  @OneToMany(() => Task, task => task.publisher)
+  published_tasks: Task[]
+
+  @RelationId((user: User) => user.published_tasks)
+  published_task_ids: number[]
+
+  @ManyToMany(() => Task, task => task.doing_users, {
+    cascade: true
+  })
+  @JoinTable()
+  doing_tasks: Task[]
+
+  @ManyToMany(() => Task, task => task.failed_users, {
+    cascade: true
+  })
+  @JoinTable()
+  failed_tasks: Task[]
+
+  @ManyToMany(() => Task, task => task.rewarded_users, {
+    cascade: true
+  })
+  @JoinTable()
+  rewarded_tasks: Task[]
 
   // timestamp of the last avatar modification time
   @Column({ default: '' })

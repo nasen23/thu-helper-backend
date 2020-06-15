@@ -7,6 +7,7 @@ import { getConnection, Not } from "typeorm"
 import { Task } from "../entity/task"
 import { checkJWT } from "./auth"
 import { User } from "../entity/user"
+import { url } from "inspector"
 
 const router = Router()
 
@@ -48,7 +49,6 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
   const task = await tasks.findOne(id)
 
   if (task) {
-    console.log(task)
     return res.json({ task })
   } else {
     return res.status(404).json({ error: 'Task not found' })
@@ -61,13 +61,8 @@ router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
   return res.status(200).json({ tasks })
 })
 
-router.get('/others/:uid', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const uid = req.params['uid']
-  const cnt = await getConnection().getRepository(User).count({ id: uid })
-  if (cnt == 0) {
-    return res.status(404).json({ error: 'User id not exist' })
-  }
-
+router.get('/others', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const uid = res.locals.userid
   const type: string = req.query['type']
   const repository = getConnection().getRepository(Task)
   const query = repository.createQueryBuilder('task')
@@ -84,9 +79,38 @@ router.get('/others/:uid', [checkJWT, urlencoded({ extended: true })], async (re
   }
 })
 
+router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const uid = res.locals.userid
+  const tid = req.body['id']
+  const taskRepository = getConnection().getRepository(Task)
+  const userRepository = getConnection().getRepository(User)
+
+  if (await taskRepository.count({ id : tid }) == 0) {
+    return res.status(404).json({ error: 'Task not exist' })
+  }
+
+  let task = await taskRepository.findOne({
+    where: { id: tid },
+    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks']
+  })
+  let user = await userRepository.findOne(uid)
+  if (user.doing_tasks.includes(task)) {
+    // cannot take twice unless the previous one has finished
+    return res.status(400).json({ error: 'Already taken' })
+  }
+  if (user.rewarded_tasks.includes(task)) {
+    // cannot take if finished before
+    return res.status(400).json({ error: 'Already finished' })
+  }
+
+  user.doing_tasks.push(task)
+  await userRepository.save(user)
+  return res.status(201).json({ msg: 'success' })
+})
+
 router.post('/delete/all', [urlencoded({ extended: true })], async (req, res) => {
   await getConnection().getRepository(Task).clear()
-  return res.status(201).json({ delete: 'success' })
+  return res.status(201).json({ msg: 'success' })
 })
 
 export default router

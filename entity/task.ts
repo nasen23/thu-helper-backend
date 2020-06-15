@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from 'typeorm'
 import { User } from './user'
 
 @Entity()
@@ -35,10 +35,6 @@ export class Task {
   @Column()
   end_time: string
 
-  // number of times each user can finish this task
-  @Column({ nullable: true })
-  times_per_person: number
-
   // number of times this task is expected to be finished
   @Column({ nullable: true })
   times_total: number
@@ -54,8 +50,19 @@ export class Task {
   @Column({ nullable: true })
   publisherId: number
 
-  @ManyToOne(type => User, publisher => publisher.tasks)
+  @ManyToOne(type => User, publisher => publisher.published_tasks, {
+    cascade: true
+  })
   publisher: User
+
+  @ManyToMany(() => User, user => user.doing_tasks)
+  doing_users: User[]
+
+  @ManyToMany(() => User, user => user.failed_tasks)
+  failed_users: User[]
+
+  @ManyToMany(() => User, user => user.rewarded_tasks)
+  rewarded_users: User[]
 
   /* for meal tasks */
 
