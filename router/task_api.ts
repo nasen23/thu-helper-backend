@@ -3,12 +3,18 @@ import { urlencoded } from "body-parser"
 import { ReqNewTask } from "../types"
 import { plainToClass } from "class-transformer"
 import { validateOrReject } from "class-validator"
-import { getConnection } from "typeorm"
+import { getConnection, Not } from "typeorm"
 import { Task } from "../entity/task"
 import { checkJWT } from "./auth"
 import { User } from "../entity/user"
 
 const router = Router()
+
+function has_ended(task: Task): boolean {
+  const end_time = +task.end_time
+  const now = Date.parse(new Date().toString())
+  return now >= end_time
+}
 
 router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const data = plainToClass(ReqNewTask, req.body)
@@ -50,14 +56,28 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
 })
 
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
-  const type: string = req.query['type']
   const repository = await getConnection().getRepository(Task)
+  const tasks = await repository.find()
+  return res.status(200).json({ tasks })
+})
+
+router.get('/others/:uid', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const uid = req.params['uid']
+  const cnt = await getConnection().getRepository(User).count({ id: uid })
+  if (cnt == 0) {
+    return res.status(404).json({ error: 'User id not exist' })
+  }
+
+  const type: string = req.query['type']
+  const repository = getConnection().getRepository(Task)
+  const query = repository.createQueryBuilder('task')
+    .where("(task.end_time) > (:now)", { now: Date.now().toString() })
+
   if (!type) {
-    const tasks = await repository.find()
-    await repository.save(tasks)
+    const tasks = await query.andWhere("task.publisherId != :uid", { uid: uid }).getMany()
     return res.status(200).json({ tasks })
   } else if (['community', 'meal', 'study', 'questionnaire'].indexOf(type) != -1) {
-    const tasks = await repository.find({ type: type })
+    const tasks = await query.andWhere("task.type = :type", { type: type }).getMany()
     return res.status(200).json({ tasks })
   } else {
     return res.status(400).json({ error: 'Invalid query parameters' })
