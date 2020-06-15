@@ -95,3 +95,8 @@ export class ReqNewTask {
   @IsOptional()
   link: string
 }
+
+export class WsMessage {
+  to: number
+  msg: string
+}

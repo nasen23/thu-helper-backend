@@ -5,7 +5,6 @@ import { getConnectionOptions, createConnection } from 'typeorm'
 import * as morgan from 'morgan'
 import * as session from 'express-session'
 import 'reflect-metadata'
-
 ;(async () => {
   const connectionOptions = await getConnectionOptions()
   if (process.env.DATABASE_HOST) {

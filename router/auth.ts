@@ -33,3 +33,12 @@ export function checkJWT(req: Request, res: Response, next: NextFunction) {
 
   next()
 }
+
+export function verifyJWT(token: string): string {
+  try {
+    const payload = jwt.verify(token, secret) as any
+    return payload.userid
+  } catch (err) {
+    return null
+  }
+}

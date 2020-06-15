@@ -3,19 +3,13 @@
   "host": "localhost",
   "port": 5432,
   "username": "postgres",
-  "password": "123456",
+  "password": "1017",
   "database": "thu_helper",
   "synchronize": true,
   "logging": false,
-  "entities": [
-    "entity/**/*.ts"
-  ],
-  "migrations": [
-    "migration/**/*.ts"
-  ],
-  "subscribers": [
-    "subscriber/**/*.ts"
-  ],
+  "entities": ["entity/**/*.ts"],
+  "migrations": ["migration/**/*.ts"],
+  "subscribers": ["subscriber/**/*.ts"],
   "cli": {
     "entitiesDir": "entity",
     "migrationsDir": "migration",
