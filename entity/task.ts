@@ -49,6 +49,9 @@ export class Task {
   @ManyToMany(() => User, user => user.doing_tasks)
   doing_users: User[]
 
+  @ManyToMany(() => User, user => user.moderating_tasks)
+  moderating_users: User[]
+
   @ManyToMany(() => User, user => user.failed_tasks)
   failed_users: User[]
 

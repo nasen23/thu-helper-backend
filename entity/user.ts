@@ -48,6 +48,12 @@ export class User {
   @JoinTable()
   doing_tasks: Task[]
 
+  @ManyToMany(() => Task, task => task.moderating_users, {
+    cascade: true
+  })
+  @JoinTable()
+  moderating_tasks: Task[]
+
   @ManyToMany(() => Task, task => task.failed_users, {
     cascade: true
   })
