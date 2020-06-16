@@ -9,8 +9,14 @@ import { sha256 } from 'js-sha256'
 import { urlencoded } from 'body-parser'
 import * as path from 'path'
 import { staticDir } from '../config'
+import { Task } from '../entity/task'
 
 const router = Router()
+
+function hasEnded(task: Task): boolean {
+  return task.end_time >= new Date().toString()
+    || task.times_finished >= task.times_total
+}
 
 router.post('/register', urlencoded({ extended: true }), async (req, res) => {
   const data = plainToClass(ReqRegister, req.body)
@@ -59,27 +65,6 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
     }
   } else {
     return res.status(404).json({ error: 'User does not exist' })
-  }
-})
-
-router.get('/:uid', checkJWT, async (req, res) => {
-  try {
-    const uid = parseInt(req.params['uid'])
-
-    const users = getConnection().getRepository(User)
-    const user = await users.findOne({ id: uid })
-    if (user) {
-      // return some simple and minimal information here
-      return res.json({
-        id: user.id,
-        username: user.username,
-      })
-    } else {
-      return res.status(404).json({ error: 'User not found' })
-    }
-  } catch (err) {
-    console.log(err)
-    return res.status(400).json({ error: 'Bad request params' })
   }
 })
 
@@ -170,6 +155,35 @@ router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, r
 
   await users.save(user)
   return res.status(201).json({ msg: 'succeeded!' })
+})
+
+router.get('/task-states', [urlencoded({ extended: true })], async (req, res) => {
+  const uid = res.locals.userid
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne(uid, {
+    relations: ['published_tasks', 'doing_tasks', 'failed_tasks', 'rewarded_tasks']
+  })
+  let taken_done = 0
+  let taken_doing = 0
+  let published_done = 0
+  let published_doing = 0
+
+  for (const task of user.published_tasks) {
+    if (hasEnded(task)) {
+      published_done++
+    } else {
+      published_doing++
+    }
+  }
+  taken_doing = user.doing_tasks.length
+  taken_done = user.failed_tasks.length + user.rewarded_tasks.length
+
+  return res.status(200).json({
+    taken_done,
+    taken_doing,
+    published_done,
+    published_doing
+  })
 })
 
 export default router
