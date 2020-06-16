@@ -101,6 +101,16 @@ router.get('/others', [checkJWT, urlencoded({ extended: true })], async (req, re
   }
 })
 
+router.get('/mine', [checkJWT, urlencoded({ extended: true })], async(req, res) => {
+  const uid = res.locals.userid
+  const repo = getConnection().getRepository(User)
+  const user = await repo.findOne(uid, {
+    relations: ['published_tasks']
+  })
+
+  return res.status(200).json({ tasks: user.published_tasks })
+})
+
 router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const uid = res.locals.userid
   const tid = req.body['id']
