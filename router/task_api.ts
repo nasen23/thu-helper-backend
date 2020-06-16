@@ -29,9 +29,6 @@ router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res)
   const publisher = await users.findOne(res.locals.userid)
 
   data['publisher'] = publisher
-  data['is_proceeding'] = true
-  data['is_done'] = false
-  data['is_paid'] = false
 
   const tasks = getConnection().getRepository(Task)
   const task = tasks.create(data)
@@ -46,9 +43,14 @@ router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res)
 router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const id = req.query['id']
   const tasks = getConnection().getRepository(Task)
-  const task = await tasks.findOne(id)
+  let task = await tasks.findOne(id, {
+    relations: ['doing_users', 'failed_users', 'rewarded_users']
+  })
 
   if (task) {
+    task.doing_users = Object(task.doing_users.map(user => user.id))
+    task.failed_users = Object(task.failed_users.map(user => user.id))
+    task.rewarded_users = Object(task.rewarded_users.map(user =>  user.id))
     return res.json({ task })
   } else {
     return res.status(404).json({ error: 'Task not found' })
@@ -57,7 +59,14 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
 
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
   const repository = await getConnection().getRepository(Task)
-  const tasks = await repository.find()
+  let tasks = await repository.find({
+    relations: ['doing_users', 'failed_users', 'rewarded_users']
+  })
+  tasks.forEach(task => {
+    task.doing_users = Object(task.doing_users.map(user => user.id))
+    task.failed_users = Object(task.failed_users.map(user => user.id))
+    task.rewarded_users = Object(task.rewarded_users.map(user =>  user.id))
+  })
   return res.status(200).json({ tasks })
 })
 
@@ -66,13 +75,26 @@ router.get('/others', [checkJWT, urlencoded({ extended: true })], async (req, re
   const type: string = req.query['type']
   const repository = getConnection().getRepository(Task)
   const query = repository.createQueryBuilder('task')
+    .leftJoinAndSelect("task.doing_users", "doing_users")
+    .leftJoinAndSelect("task.failed_users", "failed_users")
+    .leftJoinAndSelect("task.rewarded_users", "rewarded_users")
     .where("(task.end_time) > (:now)", { now: Date.now().toString() })
 
   if (!type) {
-    const tasks = await query.andWhere("task.publisherId != :uid", { uid: uid }).getMany()
+    let tasks = await query.andWhere("task.publisherId != :uid", { uid: uid }).getMany()
+    tasks.forEach(task => {
+      task.doing_users = Object(task.doing_users.map(user => user.id))
+      task.failed_users = Object(task.failed_users.map(user => user.id))
+      task.rewarded_users = Object(task.rewarded_users.map(user =>  user.id))
+    })
     return res.status(200).json({ tasks })
   } else if (['community', 'meal', 'study', 'questionnaire'].indexOf(type) != -1) {
-    const tasks = await query.andWhere("task.type = :type", { type: type }).getMany()
+    let tasks = await query.andWhere("task.type = :type", { type: type }).getMany()
+    tasks.forEach(task => {
+      task.doing_users = Object(task.doing_users.map(user => user.id))
+      task.failed_users = Object(task.failed_users.map(user => user.id))
+      task.rewarded_users = Object(task.rewarded_users.map(user =>  user.id))
+    })
     return res.status(200).json({ tasks })
   } else {
     return res.status(400).json({ error: 'Invalid query parameters' })
@@ -89,22 +111,21 @@ router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res
     return res.status(404).json({ error: 'Task not exist' })
   }
 
-  let task = await taskRepository.findOne({
-    where: { id: tid },
+  let task = await taskRepository.findOne(tid)
+  let user = await userRepository.findOne(uid, {
     relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks']
   })
-  let user = await userRepository.findOne(uid)
-  if (user.doing_tasks.includes(task)) {
+  if (user.doing_tasks.findIndex(task => task.id == tid) != -1) {
     // cannot take twice unless the previous one has finished
     return res.status(400).json({ error: 'Already taken' })
   }
-  if (user.rewarded_tasks.includes(task)) {
+  if (user.rewarded_tasks.findIndex(task => task.id == tid) != -1) {
     // cannot take if finished before
     return res.status(400).json({ error: 'Already finished' })
   }
 
   user.doing_tasks.push(task)
-  await userRepository.save(user)
+  const result = await userRepository.save(user)
   return res.status(201).json({ msg: 'success' })
 })
 

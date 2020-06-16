@@ -92,7 +92,9 @@ router.get('/:uid/profile', async (req, res) => {
   }
 
   const users = getConnection().getRepository(User)
-  const user = await users.findOne({ id: uid })
+  const user = await users.findOne(uid, {
+    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks']
+  })
   delete user.password
   if (user) {
     // return anything except password

@@ -21,15 +21,6 @@ export class Task {
   reward: string
 
   @Column()
-  is_proceeding: boolean
-
-  @Column()
-  is_done: boolean
-
-  @Column()
-  is_paid: boolean
-
-  @Column()
   start_time: string
 
   @Column()
