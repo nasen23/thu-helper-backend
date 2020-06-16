@@ -12,9 +12,8 @@ import { url } from "inspector"
 const router = Router()
 
 function has_ended(task: Task): boolean {
-  const end_time = +task.end_time
-  const now = Date.parse(new Date().toString())
-  return now >= end_time
+  return task.end_time >= new Date().toString()
+    || task.times_finished >= task.times_total
 }
 
 router.post('/add', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
@@ -44,7 +43,7 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
   const id = req.query['id']
   const tasks = getConnection().getRepository(Task)
   let task = await tasks.findOne(id, {
-    relations: ['doing_users', 'failed_users', 'rewarded_users']
+    relations: ['doing_users', 'moderating_users','failed_users', 'rewarded_users']
   })
 
   if (task) {
@@ -60,7 +59,7 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
 router.get('/all', [urlencoded({ extended: true })], async (req, res) => {
   const repository = await getConnection().getRepository(Task)
   let tasks = await repository.find({
-    relations: ['doing_users', 'failed_users', 'rewarded_users']
+    relations: ['doing_users','moderating_users', 'failed_users', 'rewarded_users']
   })
   tasks.forEach(task => {
     task.doing_users = Object(task.doing_users.map(user => user.id))
@@ -78,6 +77,7 @@ router.get('/others', [checkJWT, urlencoded({ extended: true })], async (req, re
     .leftJoinAndSelect("task.doing_users", "doing_users")
     .leftJoinAndSelect("task.failed_users", "failed_users")
     .leftJoinAndSelect("task.rewarded_users", "rewarded_users")
+    .leftJoinAndSelect("task.moderating_users", "moderating_users")
     .where("(task.end_time) > (:now)", { now: Date.now().toString() })
 
   if (!type) {
@@ -103,12 +103,35 @@ router.get('/others', [checkJWT, urlencoded({ extended: true })], async (req, re
 
 router.get('/mine', [checkJWT, urlencoded({ extended: true })], async(req, res) => {
   const uid = res.locals.userid
-  const repo = getConnection().getRepository(User)
-  const user = await repo.findOne(uid, {
+  const type = req.query['type']
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne(uid, {
     relations: ['published_tasks']
   })
 
-  return res.status(200).json({ tasks: user.published_tasks })
+  let result = []
+  if (!type) {
+    return res.status(200).json({ tasks: user.published_tasks })
+  }
+
+  switch (type) {
+    case 'doing':
+      for (const task of user.published_tasks) {
+        if (!has_ended(task)) {
+          result.push(task)
+        }
+      }
+      return res.status(200).json({ tasks: result })
+    case 'done':
+      for (const task of user.published_tasks) {
+        if (has_ended(task)) {
+          result.push(task)
+        }
+      }
+      return res.status(200).json({ tasks: result })
+    default:
+      return res.status(400).json({ error: 'Invalid query parameters' })
+  }
 })
 
 router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
@@ -123,7 +146,7 @@ router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res
 
   let task = await taskRepository.findOne(tid)
   let user = await userRepository.findOne(uid, {
-    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks']
+    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks', 'moderating_tasks']
   })
   if (user.doing_tasks.findIndex(task => task.id == tid) != -1) {
     // cannot take twice unless the previous one has finished
