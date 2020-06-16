@@ -173,7 +173,8 @@ router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res
     // cannot take twice unless the previous one has finished
     return res.status(400).json({ error: 'Already taken' })
   }
-  if (user.rewarded_tasks.findIndex(task => task.id == tid) != -1) {
+  if (user.failed_tasks.findIndex(task => task.id == tid) != -1 ||
+    user.rewarded_tasks.findIndex(task => task.id == tid) != -1) {
     // cannot take if finished before
     return res.status(400).json({ error: 'Already finished' })
   }
