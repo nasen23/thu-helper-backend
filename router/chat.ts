@@ -72,7 +72,7 @@ router.get('/message', checkJWT, (req, res) => {
   const date = new Date(req.params['since'])
   const user = res.locals.user as User
   const messages = getConnection().getRepository(Message)
-  if (date instanceof Date && !isNaN(date)) {
+  if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
     const results = messages
       .createQueryBuilder('message')
