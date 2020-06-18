@@ -152,6 +152,7 @@ router.post(
   [checkJWT, urlencoded({ extended: true })],
   async (req, res) => {
     const data = req.body
+    const users = getConnection().getRepository(User)
     const user = res.locals.user as User
 
     const fields = ['username', 'signature']
