@@ -38,6 +38,9 @@ export class Task {
   @Column()
   review_time: number
 
+  @Column({ default: 0 })
+  view_count: number
+
   @Column({ nullable: true })
   publisherId: number
 
