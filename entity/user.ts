@@ -1,14 +1,5 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  RelationId,
-  ManyToMany,
-  JoinTable,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, RelationId, ManyToMany, JoinTable } from 'typeorm'
 import { Task } from './task'
-import { Message } from './message'
 
 @Entity()
 export class User {
@@ -52,36 +43,28 @@ export class User {
   published_task_ids: number[]
 
   @ManyToMany(() => Task, task => task.doing_users, {
-    cascade: true,
+    cascade: true
   })
   @JoinTable()
   doing_tasks: Task[]
 
   @ManyToMany(() => Task, task => task.moderating_users, {
-    cascade: true,
+    cascade: true
   })
   @JoinTable()
   moderating_tasks: Task[]
 
   @ManyToMany(() => Task, task => task.failed_users, {
-    cascade: true,
+    cascade: true
   })
   @JoinTable()
   failed_tasks: Task[]
 
   @ManyToMany(() => Task, task => task.rewarded_users, {
-    cascade: true,
+    cascade: true
   })
   @JoinTable()
   rewarded_tasks: Task[]
-
-  @OneToMany(() => Message, message => message.sender, { cascade: true })
-  @JoinTable()
-  sent_msgs: Message[]
-
-  @OneToMany(() => Message, message => message.receiver, { cascade: true })
-  @JoinTable()
-  received_msgs: Message[]
 
   // timestamp of the last avatar modification time
   @Column({ default: '' })
