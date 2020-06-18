@@ -67,11 +67,40 @@ router.get(
     })
 
     if (task) {
-      task.view_count++
+      if (req.query['browsing']) {
+        task.view_count++
+      }
       await tasks.save(task)
       return res.json({ task })
     } else {
       return res.status(404).json({ error: 'Task not found' })
+    }
+  }
+)
+
+router.post(
+  '/modify',
+  [checkJWT, urlencoded({ extended: true })],
+  async (req, res) => {
+    const data = plainToClass(ReqNewTask, req.body)
+    try {
+      await validateOrReject(data)
+    } catch (errors) {
+      console.log(errors)
+      return res.status(400).json({ error: 'Invalid request parameters' })
+    }
+    const taskRepo = getConnection().getRepository(Task)
+    let task = await taskRepo.findOne(data['taskId'])
+    if (task) {
+      for (const key in data) {
+        if (task.hasOwnProperty(key)) {
+          task[key] = data[key]
+        }
+      }
+      await taskRepo.save(task)
+      return res.status(201).json({ msg: 'success' })
+    } else {
+      return res.status(404).json({ error: 'Task not existed' })
     }
   }
 )
