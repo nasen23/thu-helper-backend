@@ -179,8 +179,42 @@ router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res
   }
 
   user.doing_tasks.push(task)
-  const result = await userRepository.save(user)
+  await userRepository.save(user)
   return res.status(201).json({ msg: 'success' })
+})
+
+router.post('/submit', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const uid = res.locals.userid
+  const tid = req.body['id']
+  const taskRepo = getConnection().getRepository(Task)
+  const userRepo = getConnection().getRepository(User)
+
+  if (await taskRepo.count({ id: tid }) == 0) {
+    return res.status(404).json({ error: 'Task not existed' })
+  }
+
+  let task = await taskRepo.findOne(tid)
+  let user = await userRepo.findOne(uid, {
+    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks', 'moderating_tasks']
+  })
+
+  if (user.moderating_tasks.findIndex(task => task.id == tid) != -1) {
+    return res.status(400).json({ error: 'Already under moderation' })
+  }
+
+  if (user.failed_tasks.findIndex(task => task.id == tid) != -1 ||
+    user.rewarded_tasks.findIndex(task => task.id == tid) != -1) {
+    return res.status(400).json({ error: 'Already finished' })
+  }
+
+  const idx = user.doing_tasks.findIndex(task => task.id == tid)
+  if (idx != -1) {
+    const tasks = user.doing_tasks.splice(idx, 1)
+    user.moderating_tasks.push(tasks[0])
+    await userRepo.save(user)
+    return res.status(201).json({ msg: 'success' })
+  }
+  return res.status(400).json({ error: 'Bad request' })
 })
 
 router.post('/delete/all', [urlencoded({ extended: true })], async (req, res) => {
