@@ -82,7 +82,7 @@ router.get('/:uid/profile', async (req, res) => {
   })
   delete user.password
   if (user) {
-    // return anything except password
+    // return everything except password
     if (Object.keys(req.query).length !== 0) {
       let result = {}
       for (const key in req.query) {

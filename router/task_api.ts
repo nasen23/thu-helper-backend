@@ -54,7 +54,6 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
   })
 
   if (task) {
-    mapUserToId(task)
     return res.json({ task })
   } else {
     return res.status(404).json({ error: 'Task not found' })
