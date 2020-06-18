@@ -184,8 +184,8 @@ router.post('/take', [checkJWT, urlencoded({ extended: true })], async (req, res
 })
 
 router.post('/submit', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const uid = res.locals.userid
   const tid = req.body['id']
+  const uid = res.locals.userid
   const taskRepo = getConnection().getRepository(Task)
   const userRepo = getConnection().getRepository(User)
 
@@ -212,6 +212,47 @@ router.post('/submit', [checkJWT, urlencoded({ extended: true })], async (req, r
     const tasks = user.doing_tasks.splice(idx, 1)
     user.moderating_tasks.push(tasks[0])
     await userRepo.save(user)
+    return res.status(201).json({ msg: 'success' })
+  }
+  return res.status(400).json({ error: 'Bad request' })
+})
+
+router.post('/moderate', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const tid = req.body['taskId']
+  const passed = req.body['passed']
+  const takerId = req.body['takerId']
+  const taskRepo = getConnection().getRepository(Task)
+  const userRepo = getConnection().getRepository(User)
+
+  console.log(req.body)
+  if (await taskRepo.count({ id: tid }) == 0) {
+    return res.status(404).json({ error: 'Task not existed' })
+  }
+
+  let task = await taskRepo.findOne(tid)
+  let taker = await userRepo.findOne(takerId, {
+    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks', 'moderating_tasks']
+  })
+
+  if (taker.doing_tasks.findIndex(task => task.id == tid) != -1) {
+    return res.status(400).json({ error: 'Please submit firsrt' })
+  }
+
+  if (taker.failed_tasks.findIndex(task => task.id == tid) != -1) {
+    return res.status(400).json({ error: 'Already finished' })
+  }
+
+  const idx = taker.moderating_tasks.findIndex(task => task.id == tid)
+  if (idx != -1) {
+    const tasks = taker.moderating_tasks.splice(idx, 1)
+    if (passed == 'true') {
+      // moderation passed
+      taker.rewarded_tasks.push(tasks[0])
+    } else {
+      // moderation failed
+      taker.failed_tasks.push(tasks[0])
+    }
+    await userRepo.save(taker)
     return res.status(201).json({ msg: 'success' })
   }
   return res.status(400).json({ error: 'Bad request' })
