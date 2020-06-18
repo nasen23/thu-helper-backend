@@ -157,6 +157,21 @@ router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, r
   return res.status(201).json({ msg: 'succeeded!' })
 })
 
+router.post('/modify-pwd', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const data = req.body
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne(res.locals.userid)
+  const oldPwd = data['oldPwd']
+  const newPwd = data['newPwd']
+
+  if (user.password !== sha256(oldPwd)) {
+    return res.status(400).json({ error: 'Incorrect password' })
+  }
+  user.password = sha256(newPwd)
+  await userRepo.save(user)
+  return res.status(201).json({ msg: 'success' })
+})
+
 router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const uid = res.locals.userid
   const userRepo = getConnection().getRepository(User)
