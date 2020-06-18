@@ -1,7 +1,9 @@
-import { getConnection } from 'typeorm'
+import { Router } from 'express'
+import { getConnection, MoreThan } from 'typeorm'
 import { User } from '../entity/user'
+import { Message } from '../entity/message'
 import * as WebSocket from 'ws'
-import { verifyJWT } from './auth'
+import { verifyJWT, checkJWT } from './auth'
 import { validateOrReject } from 'class-validator'
 import { plainToClass } from 'class-transformer'
 import { WsMessage } from '../types'
@@ -32,14 +34,27 @@ wss.on('connection', (ws, req) => {
       const json = JSON.parse(msg)
       const info = plainToClass(WsMessage, json)
       await validateOrReject(info)
+      // find proper user to send to
+      const users = getConnection().getRepository(User)
+      const receiver = await users.findOne(info.to)
+      if (!receiver) {
+        return
+      }
+      const messages = getConnection().getRepository(Message)
+      const message = new Message()
+      message.sender = user
+      message.receiver = receiver
+      message.time = new Date()
+      message.content = info.msg
+      messages.save(message)
+
       const toWs = connections.get(info.to)
+      // send if the receiver is currently online
       if (toWs) {
         toWs.send({ from: user.id, msg: info.msg })
-      } else {
-        // insert into database
       }
     } catch (err) {
-      ws.send({ error: 'Invalid message body' })
+      return
     }
   })
   ws.on('close', () => {
@@ -47,3 +62,37 @@ wss.on('connection', (ws, req) => {
     ws.close()
   })
 })
+
+const router = Router()
+
+// Get all messages or some messages since some time
+// http get params
+// since: number (should provide me a timestamp with unit of millisecond`second * 1000`)
+router.get('/message', checkJWT, (req, res) => {
+  const date = new Date(req.params['since'])
+  const user = res.locals.user as User
+  const messages = getConnection().getRepository(Message)
+  if (date instanceof Date && !isNaN(date)) {
+    // get message since date
+    const results = messages
+      .createQueryBuilder('message')
+      .innerJoin('message.sender', 'sender', 'sender.id = :id', { id: user.id })
+      .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
+        id: user.id,
+      })
+      .where('time > :date', { date })
+      .getMany()
+    return res.json(results)
+  } else {
+    const results = messages
+      .createQueryBuilder('message')
+      .innerJoin('message.sender', 'sender', 'sender.id = :id', { id: user.id })
+      .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
+        id: user.id,
+      })
+      .getMany()
+    return res.json(results)
+  }
+})
+
+export default router
