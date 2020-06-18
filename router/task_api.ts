@@ -54,7 +54,9 @@ router.get('/get', [checkJWT, urlencoded({ extended: true })], async (req, res) 
   })
 
   if (task) {
-    task.view_count++
+    if (req.query['browsing']) {
+      task.view_count++
+    }
     await tasks.save(task)
     return res.json({ task })
   } else {
