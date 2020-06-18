@@ -157,7 +157,7 @@ router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, r
   return res.status(201).json({ msg: 'succeeded!' })
 })
 
-router.get('/task-states', [urlencoded({ extended: true })], async (req, res) => {
+router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const uid = res.locals.userid
   const userRepo = getConnection().getRepository(User)
   const user = await userRepo.findOne(uid, {
