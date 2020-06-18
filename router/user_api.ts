@@ -14,8 +14,10 @@ import { Task } from '../entity/task'
 const router = Router()
 
 function hasEnded(task: Task): boolean {
-  return task.end_time >= new Date().toString()
-    || task.times_finished >= task.times_total
+  return (
+    task.end_time >= new Date().toString() ||
+    task.times_finished >= task.times_total
+  )
 }
 
 router.post('/register', urlencoded({ extended: true }), async (req, res) => {
@@ -58,7 +60,7 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
       const jwt = new JWT(user)
       return res.status(201).json({
         token: jwt.token,
-        userId: user.id
+        userId: user.id,
       })
     } else {
       return res.status(403).json({ error: 'Incorrect password' })
@@ -78,7 +80,12 @@ router.get('/:uid/profile', async (req, res) => {
 
   const users = getConnection().getRepository(User)
   const user = await users.findOne(uid, {
-    relations: ['doing_tasks', 'failed_tasks', 'rewarded_tasks', 'moderating_tasks']
+    relations: [
+      'doing_tasks',
+      'failed_tasks',
+      'rewarded_tasks',
+      'moderating_tasks',
+    ],
   })
   delete user.password
   if (user) {
@@ -140,65 +147,81 @@ router.get('/:uid/background', (req, res) => {
   }
 })
 
-router.post('/modify', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const data = req.body
-  const users = getConnection().getRepository(User)
-  const user = await users.findOne(res.locals.userid)
+router.post(
+  '/modify',
+  [checkJWT, urlencoded({ extended: true })],
+  async (req, res) => {
+    const data = req.body
+    const user = res.locals.user as User
 
-  const fields = ['username', 'signature']
+    const fields = ['username', 'signature']
 
-  for (const field of fields) {
-    if (data[field]) {
-      user[field] = data[field]
+    for (const field of fields) {
+      if (data[field]) {
+        user[field] = data[field]
+      }
     }
+    await users.save(user)
+    return res.status(201).json({ msg: 'succeeded!' })
   }
+)
 
-  await users.save(user)
-  return res.status(201).json({ msg: 'succeeded!' })
-})
+router.post(
+  '/modify-pwd',
+  [checkJWT, urlencoded({ extended: true })],
+  async (req, res) => {
+    const data = req.body
+    const userRepo = getConnection().getRepository(User)
+    const user = res.locals.user as User
+    const oldPwd = data['oldPwd']
+    const newPwd = data['newPwd']
 
-router.post('/modify-pwd', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const data = req.body
-  const userRepo = getConnection().getRepository(User)
-  const user = await userRepo.findOne(res.locals.userid)
-  const oldPwd = data['oldPwd']
-  const newPwd = data['newPwd']
-
-  if (user.password !== sha256(oldPwd)) {
-    return res.status(400).json({ error: 'Incorrect password' })
-  }
-  user.password = sha256(newPwd)
-  await userRepo.save(user)
-  return res.status(201).json({ msg: 'success' })
-})
-
-router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const uid = res.locals.userid
-  const userRepo = getConnection().getRepository(User)
-  const user = await userRepo.findOne(uid, {
-    relations: ['published_tasks', 'doing_tasks', 'failed_tasks', 'rewarded_tasks']
-  })
-  let taken_done = 0
-  let taken_doing = 0
-  let published_done = 0
-  let published_doing = 0
-
-  for (const task of user.published_tasks) {
-    if (hasEnded(task)) {
-      published_done++
-    } else {
-      published_doing++
+    if (user.password !== sha256(oldPwd)) {
+      return res.status(400).json({ error: 'Incorrect password' })
     }
+    user.password = sha256(newPwd)
+    await userRepo.save(user)
+    return res.status(201).json({ msg: 'success' })
   }
-  taken_doing = user.doing_tasks.length
-  taken_done = user.failed_tasks.length + user.rewarded_tasks.length
+)
 
-  return res.status(200).json({
-    taken_done,
-    taken_doing,
-    published_done,
-    published_doing
-  })
-})
+router.get(
+  '/task-states',
+  [checkJWT, urlencoded({ extended: true })],
+  async (req, res) => {
+    const uid = (res.locals.user as User).id
+    const userRepo = getConnection().getRepository(User)
+    const user = await userRepo.findOne(uid, {
+      relations: [
+        'published_tasks',
+        'doing_tasks',
+        'failed_tasks',
+        'rewarded_tasks',
+      ],
+    })
+    let taken_done = 0
+    let taken_doing = 0
+    let published_done = 0
+    let published_doing = 0
+
+    for (const task of user.published_tasks) {
+      if (hasEnded(task)) {
+        published_done++
+      } else {
+        published_doing++
+      }
+    }
+
+    taken_doing = user.doing_tasks.length
+    taken_done = user.failed_tasks.length + user.rewarded_tasks.length
+
+    return res.status(200).json({
+      taken_done,
+      taken_doing,
+      published_done,
+      published_doing,
+    })
+  }
+)
 
 export default router
