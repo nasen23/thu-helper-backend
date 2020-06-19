@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import { getConnection, MoreThan } from 'typeorm'
+import { getConnection } from 'typeorm'
 import { User } from '../entity/user'
-import { Message } from '../entity/message'
+import { Message, MessageType } from '../entity/message'
 import * as WebSocket from 'ws'
 import { verifyJWT, checkJWT } from './auth'
 import { validateOrReject } from 'class-validator'
@@ -45,13 +45,14 @@ wss.on('connection', (ws, req) => {
       message.sender = user
       message.receiver = receiver
       message.time = new Date()
-      message.content = info.msg
+      message.content = info.content
+      message.type = MessageType[info.type]
       messages.save(message)
 
       const toWs = connections.get(info.to)
       // send if the receiver is currently online
       if (toWs) {
-        toWs.send({ from: user.id, msg: info.msg })
+        toWs.send({ from: user.id, type: info.type, content: info.content })
       }
     } catch (err) {
       return
