@@ -69,28 +69,44 @@ const router = Router()
 // Get all messages or some messages since some time
 // http get params
 // since: number (should provide me a timestamp with unit of millisecond`second * 1000`)
-router.get('/message', checkJWT, (req, res) => {
-  const date = new Date(req.params['since'])
+router.get('/message', checkJWT, async (req, res) => {
+  const date = new Date(req.query['since'] as string)
   const user = res.locals.user as User
   const messages = getConnection().getRepository(Message)
   if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
-    const results = messages
+    const results = await messages
       .createQueryBuilder('message')
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
       .where('time > :date', { date })
       .getMany()
-    return res.json(results)
+    const json = {}
+    for (const msg of results) {
+      if (json[msg.senderId]) {
+        json[msg.senderId].push(msg)
+      } else {
+        json[msg.senderId] = [msg]
+      }
+    }
+    return res.json(json)
   } else {
-    const results = messages
+    const results = await messages
       .createQueryBuilder('message')
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
       .getMany()
-    return res.json(results)
+    const json = {}
+    for (const msg of results) {
+      if (json[msg.senderId]) {
+        json[msg.senderId].push(msg)
+      } else {
+        json[msg.senderId] = [msg]
+      }
+    }
+    return res.json(json)
   }
 })
 
