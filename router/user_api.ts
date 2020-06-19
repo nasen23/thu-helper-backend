@@ -172,6 +172,29 @@ router.post('/modify-pwd', [checkJWT, urlencoded({ extended: true })], async (re
   return res.status(201).json({ msg: 'success' })
 })
 
+router.post('/forget-pwd', urlencoded({ extended: true }), async (req, res) => {
+  const data = plainToClass(ReqLogin, req.body)
+  try {
+    await validateOrReject(data)
+  } catch (err) {
+    console.log(err)
+    return res.status(400).json({ error: 'Invalid reqeust parameters' })
+  }
+
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne({ phone: data.phone })
+  if (user) {
+    const jwt = new JWT(user)
+    return res.status(201).json({
+      token: jwt.token,
+      userId: user.id,
+      username: user.username
+    })
+  } else {
+    return res.status(404).json({ err: 'User does not exist' })
+  }
+})
+
 router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const uid = res.locals.userid
   const userRepo = getConnection().getRepository(User)
