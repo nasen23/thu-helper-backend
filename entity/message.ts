@@ -30,10 +30,10 @@ export class Message {
   @Column('enum', { enum: MessageType })
   type: MessageType
 
-  @Column('longtext')
+  @Column('text')
   content: string
 
   // time the message arrives at server
   @Column()
-  time: Date
+  time: number
 }

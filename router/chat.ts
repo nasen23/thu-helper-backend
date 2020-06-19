@@ -44,7 +44,7 @@ wss.on('connection', (ws, req) => {
       const message = new Message()
       message.sender = user
       message.receiver = receiver
-      message.time = new Date()
+      message.time = Date.now()
       message.content = info.content
       message.type = MessageType[info.type]
       messages.save(message)
@@ -72,41 +72,31 @@ const router = Router()
 router.get('/message', checkJWT, async (req, res) => {
   const date = new Date(req.query['since'] as string)
   const user = res.locals.user as User
-  const messages = getConnection().getRepository(Message)
+  const users = getConnection().getRepository(User)
   if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
-    const results = await messages
-      .createQueryBuilder('message')
+    const results = await users
+      .createQueryBuilder('user')
+      .select('user.id', 'id')
+      .select('user.username', 'username')
+      .innerJoinAndSelect('user.sent_msgs', 'message')
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
-      .where('time > :date', { date })
+      .where('message.time > :date', { date })
       .getMany()
-    const json = {}
-    for (const msg of results) {
-      if (json[msg.senderId]) {
-        json[msg.senderId].push(msg)
-      } else {
-        json[msg.senderId] = [msg]
-      }
-    }
-    return res.json(json)
+    return res.json(results)
   } else {
-    const results = await messages
-      .createQueryBuilder('message')
+    const results = await users
+      .createQueryBuilder('user')
+      .select('user.id', 'id')
+      .select('user.username', 'username')
+      .innerJoinAndSelect('user.sent_msgs', 'message')
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
       .getMany()
-    const json = {}
-    for (const msg of results) {
-      if (json[msg.senderId]) {
-        json[msg.senderId].push(msg)
-      } else {
-        json[msg.senderId] = [msg]
-      }
-    }
-    return res.json(json)
+    return res.json(results)
   }
 })
 
