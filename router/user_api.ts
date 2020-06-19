@@ -230,6 +230,14 @@ router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (re
       published_doing++
     }
   }
+  taken_doing = user.doing_tasks.length
+  taken_done = user.rewarded_tasks.length + user.failed_tasks.length
+  return res.status(200).json({
+    taken_done,
+    taken_doing,
+    published_done,
+    published_doing
+  })
 })
 
 router.get(
