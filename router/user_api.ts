@@ -219,7 +219,7 @@ router.post('/forget-pwd', urlencoded({ extended: true }), async (req, res) => {
 })
 
 router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
-  const uid = res.locals.userid
+  const uid = (res.locals.user as User).id
   const userRepo = getConnection().getRepository(User)
   const user = await userRepo.findOne(uid, {
     relations: [
@@ -249,44 +249,5 @@ router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (re
     published_doing
   })
 })
-
-router.get(
-  '/task-states',
-  [checkJWT, urlencoded({ extended: true })],
-  async (req, res) => {
-    const uid = (res.locals.user as User).id
-    const userRepo = getConnection().getRepository(User)
-    const user = await userRepo.findOne(uid, {
-      relations: [
-        'published_tasks',
-        'doing_tasks',
-        'failed_tasks',
-        'rewarded_tasks',
-      ],
-    })
-    let taken_done = 0
-    let taken_doing = 0
-    let published_done = 0
-    let published_doing = 0
-
-    for (const task of user.published_tasks) {
-      if (hasEnded(task)) {
-        published_done++
-      } else {
-        published_doing++
-      }
-    }
-
-    taken_doing = user.doing_tasks.length
-    taken_done = user.failed_tasks.length + user.rewarded_tasks.length
-
-    return res.status(200).json({
-      taken_done,
-      taken_doing,
-      published_done,
-      published_doing,
-    })
-  }
-)
 
 export default router
