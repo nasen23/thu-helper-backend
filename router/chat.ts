@@ -70,31 +70,30 @@ const router = Router()
 // http get params
 // since: number (should provide me a timestamp with unit of millisecond`second * 1000`)
 router.get('/message', checkJWT, async (req, res) => {
-  const date = new Date(req.query['since'] as string)
+  const timestamp = parseInt(req.query['since'] as string)
+  const date = new Date(timestamp)
   const user = res.locals.user as User
   const users = getConnection().getRepository(User)
   if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
     const results = await users
       .createQueryBuilder('user')
-      .select('user.id', 'id')
-      .select('user.username', 'username')
       .innerJoinAndSelect('user.sent_msgs', 'message')
-      .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
-        id: user.id,
-      })
-      .where('message.time > :date', { date })
+      .where('message.receiver = :id', { id: user.id })
+      .andWhere('message.time > :date', { date: date.getTime() })
+      .select('user.id')
+      .addSelect('user.username')
+      .addSelect('message')
       .getMany()
     return res.json(results)
   } else {
     const results = await users
       .createQueryBuilder('user')
-      .select('user.id', 'id')
-      .select('user.username', 'username')
       .innerJoinAndSelect('user.sent_msgs', 'message')
-      .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
-        id: user.id,
-      })
+      .where('message.receiver = :id', { id: user.id })
+      .select('user.id')
+      .addSelect('user.username')
+      .addSelect('message')
       .getMany()
     return res.json(results)
   }
