@@ -1,3 +1,4 @@
+import { getConnection } from 'typeorm'
 import * as jwt from 'jsonwebtoken'
 import { User } from '../entity/user'
 import { secret } from '../config'
@@ -25,7 +26,13 @@ export function checkJWT(req: Request, res: Response, next: NextFunction) {
   const token = <string>req.headers['auth']
   try {
     const jwtPayload = <any>jwt.verify(token, secret)
-    res.locals.userid = jwtPayload.userid
+    const userid = parseInt(jwtPayload.userid)
+    const users = getConnection().getRepository(User)
+    const user = users.findOne(userid)
+    res.locals.user = user
+    if (!user) {
+      throw 'User not found'
+    }
   } catch (err) {
     res.status(401).json({ error: 'Unauthorized' })
     return

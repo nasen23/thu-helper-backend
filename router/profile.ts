@@ -45,12 +45,12 @@ router.post('/', checkJWT, async (req, res) => {
   } catch (err) {
     return res.status(400).json({ error: 'Invalid request body' })
   }
-  const id = res.locals.userid
+  const user = res.locals.user as User
   const users = getConnection().getRepository(User)
   try {
-    await users.update({ id: id }, profile)
-    const updated = users.findOne({ id: id })
-    return res.json({ ...updated, password: undefined })
+    Object.assign(user, profile)
+    await users.save(user)
+    return res.json({ ...user, password: undefined })
   } catch (err) {
     return res.status(400).json({ error: 'Invalid update request' })
   }
@@ -60,7 +60,7 @@ router.post(
   '/avatar',
   [checkJWT, avatarUpload.single('file')],
   (req: Request, res: Response) => {
-    const id = res.locals.userid
+    const id = (res.locals.user as User).id
     const filename = id + '.png'
     const dir = path.join(staticDir, 'avatar')
     const oldFilepath = path.join(dir, req.file.filename)
@@ -89,7 +89,7 @@ router.post(
   '/background',
   [checkJWT, bgUpload.single('file')],
   (req: Request, res: Response) => {
-    const id = res.locals.userid
+    const id = (res.locals.user as User).id
     const filename = 'bg' + id + '.png'
     const dir = path.join(staticDir, 'background')
     const oldFilepath = path.join(dir, req.file.filename)
