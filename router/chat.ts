@@ -77,7 +77,6 @@ router.get('/message', checkJWT, (req, res) => {
     // get message since date
     const results = messages
       .createQueryBuilder('message')
-      .innerJoin('message.sender', 'sender', 'sender.id = :id', { id: user.id })
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
@@ -87,7 +86,6 @@ router.get('/message', checkJWT, (req, res) => {
   } else {
     const results = messages
       .createQueryBuilder('message')
-      .innerJoin('message.sender', 'sender', 'sender.id = :id', { id: user.id })
       .innerJoin('message.receiver', 'receiver', 'receiver.id = :id', {
         id: user.id,
       })
