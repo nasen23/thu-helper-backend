@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsIn,
   IsNumberString,
+  IsNumber,
 } from 'class-validator'
 
 export class ReqRegister {
@@ -97,6 +98,12 @@ export class ReqNewTask {
 }
 
 export class WsMessage {
+  @IsNumber()
   to: number
-  msg: string
+
+  @IsIn(['text', 'image'])
+  type: 'text' | 'image'
+
+  // plain text or base64 encoded image
+  content: string
 }

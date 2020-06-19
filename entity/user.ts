@@ -75,11 +75,11 @@ export class User {
   @JoinTable()
   rewarded_tasks: Task[]
 
-  @OneToMany(() => Message, message => message.sender, { cascade: true })
+  @ManyToMany(() => Message, message => message.sender, { cascade: true })
   @JoinTable()
   sent_msgs: Message[]
 
-  @OneToMany(() => Message, message => message.receiver, { cascade: true })
+  @ManyToMany(() => Message, message => message.receiver, { cascade: true })
   @JoinTable()
   received_msgs: Message[]
 
