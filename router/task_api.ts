@@ -137,6 +137,7 @@ router.get(
       .leftJoinAndSelect('task.rewarded_users', 'rewarded_users')
       .leftJoinAndSelect('task.moderating_users', 'moderating_users')
       .where('(task.end_time) > (:now)', { now: Date.now().toString() })
+      .andWhere('task.publisherId != :uid', { uid: uid })
 
     if (limit) {
       const cnt = parseInt(limit)
@@ -145,7 +146,6 @@ router.get(
 
     if (!type) {
       let tasks = await query
-        .andWhere('task.publisherId != :uid', { uid: uid })
         .getMany()
       tasks.forEach(task => {
         mapUserToId(task)
