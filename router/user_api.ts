@@ -155,7 +155,17 @@ router.post(
     const users = getConnection().getRepository(User)
     const user = res.locals.user as User
 
-    const fields = ['username', 'signature']
+    const fields = [
+      'username',
+      'signature',
+      'phone',
+      'realname',
+      'department',
+      'grade',
+      'dormitory',
+      'wechat',
+      'email'
+    ]
 
     for (const field of fields) {
       if (data[field]) {
