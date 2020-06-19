@@ -126,16 +126,22 @@ router.get(
   [checkJWT, urlencoded({ extended: true })],
   async (req, res) => {
     const uid = (res.locals.user as User).id
-    const type: string = req.query['type']
+    const type = req.query['type']
+    const limit = req.query['limit']
     const taskRepo = getConnection().getRepository(Task)
     const userRepo = getConnection().getRepository(User)
-    const query = taskRepo
+    let query = taskRepo
       .createQueryBuilder('task')
       .leftJoinAndSelect('task.doing_users', 'doing_users')
       .leftJoinAndSelect('task.failed_users', 'failed_users')
       .leftJoinAndSelect('task.rewarded_users', 'rewarded_users')
       .leftJoinAndSelect('task.moderating_users', 'moderating_users')
       .where('(task.end_time) > (:now)', { now: Date.now().toString() })
+
+    if (limit) {
+      const cnt = parseInt(limit)
+      query = query.take(cnt)
+    }
 
     if (!type) {
       let tasks = await query
