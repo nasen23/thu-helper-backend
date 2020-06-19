@@ -48,9 +48,6 @@ export class User {
   @OneToMany(() => Task, task => task.publisher)
   published_tasks: Task[]
 
-  @RelationId((user: User) => user.published_tasks)
-  published_task_ids: number[]
-
   @ManyToMany(() => Task, task => task.doing_users, {
     cascade: true,
   })
