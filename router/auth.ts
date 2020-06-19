@@ -22,13 +22,17 @@ export class JWT {
   }
 }
 
-export function checkJWT(req: Request, res: Response, next: NextFunction) {
+export async function checkJWT(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   const token = <string>req.headers['auth']
   try {
     const jwtPayload = <any>jwt.verify(token, secret)
     const userid = parseInt(jwtPayload.userid)
     const users = getConnection().getRepository(User)
-    const user = users.findOne(userid)
+    const user = await users.findOne(userid)
     res.locals.user = user
     if (!user) {
       throw 'User not found'
