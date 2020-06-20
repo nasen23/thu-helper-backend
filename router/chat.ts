@@ -40,6 +40,8 @@ wss.on('connection', (ws, req) => {
       if (!receiver) {
         return
       }
+      user.talkedUsers.push(receiver)
+      receiver.talkedUsers.push(user)
       const messages = getConnection().getRepository(Message)
       const message = new Message()
       message.sender = user
@@ -47,7 +49,9 @@ wss.on('connection', (ws, req) => {
       message.time = Date.now().toString()
       message.content = info.content
       message.type = MessageType[info.type]
-      messages.save(message)
+      await messages.save(message)
+      await users.save(user)
+      await users.save(receiver)
 
       const toWs = connections.get(info.to)
       // send if the receiver is currently online
@@ -83,10 +87,10 @@ router.get('/sent', checkJWT, async (req, res) => {
     .addSelect('msg.type')
     .addSelect('msg.content')
     .addSelect('msg.time')
-    // .leftJoinAndSelect('user.sent_msgs', 'message')
-    // // .where('message.receiver = :id', { id: receiverId })
-    // .where('user.id = :uid', { uid: uid })
-    // .select('sent_msgs')
+  // .leftJoinAndSelect('user.sent_msgs', 'message')
+  // // .where('message.receiver = :id', { id: receiverId })
+  // .where('user.id = :uid', { uid: uid })
+  // .select('sent_msgs')
 
   if (date instanceof Date && !isNaN(date.getTime())) {
     const results = await query
@@ -131,6 +135,30 @@ router.get('/message', checkJWT, async (req, res) => {
       .getMany()
     return res.json(results)
   }
+})
+
+// chat history with another user
+router.get('/:uid(\\d+)', checkJWT, async (req, res) => {
+  const user = res.locals.user as User
+  const uid = parseInt(req.params['uid'])
+  if (uid == user.id) {
+    return res.send([])
+  }
+  const messages = getConnection().getRepository(Message)
+  const results = await messages
+    .createQueryBuilder('message')
+    .innerJoin('message.sender', 'sender')
+    .innerJoin('message.receiver', 'receiver')
+    .where('sender.id = :id1 AND receiver.id = :id2', {
+      id1: user.id,
+      id2: uid,
+    })
+    .orWhere('sender.id = :id1 AND receiver.id = :id2', {
+      id1: uid,
+      id2: user.id,
+    })
+    .getMany()
+  return res.json(results)
 })
 
 export default router

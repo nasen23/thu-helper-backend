@@ -87,4 +87,8 @@ export class User {
   // timestamp of the last profile background modification time
   @Column({ default: '' })
   bg_ts: string
+
+  // we had some conversations
+  @ManyToMany(() => User, user => user.talkedUsers)
+  talkedUsers: User[]
 }
