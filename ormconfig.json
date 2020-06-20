@@ -6,7 +6,7 @@
   "password": "1017",
   "database": "thu_helper",
   "synchronize": true,
-  "logging": true,
+  "logging": false,
   "entities": ["entity/**/*.ts"],
   "migrations": ["migration/**/*.ts"],
   "subscribers": ["subscriber/**/*.ts"],

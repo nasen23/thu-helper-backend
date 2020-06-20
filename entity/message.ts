@@ -21,9 +21,6 @@ export class Message {
   @JoinColumn({ name: 'senderId' })
   sender: User
 
-  @Column({ nullable: false })
-  senderId: number
-
   @ManyToOne(() => User, user => user.received_msgs)
   receiver: User
 
@@ -35,5 +32,5 @@ export class Message {
 
   // time the message arrives at server
   @Column()
-  time: number
+  time: string
 }

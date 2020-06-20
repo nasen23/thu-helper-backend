@@ -44,7 +44,7 @@ wss.on('connection', (ws, req) => {
       const message = new Message()
       message.sender = user
       message.receiver = receiver
-      message.time = Date.now()
+      message.time = Date.now().toString()
       message.content = info.content
       message.type = MessageType[info.type]
       messages.save(message)
@@ -70,7 +70,7 @@ const router = Router()
 // http get params
 // since: number (should provide me a timestamp with unit of millisecond`second * 1000`)
 router.get('/message', checkJWT, async (req, res) => {
-  const timestamp = parseInt(req.query['since'] as string)
+  const timestamp = req.query['since'] as string
   const date = new Date(timestamp)
   const user = res.locals.user as User
   const users = getConnection().getRepository(User)
