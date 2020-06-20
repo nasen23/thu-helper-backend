@@ -66,6 +66,40 @@ wss.on('connection', (ws, req) => {
 
 const router = Router()
 
+router.get('/sent', checkJWT, async (req, res) => {
+  const timestamp = req.query['since'] as string
+  const receiverId = parseInt(req.query['receiver'] as string)
+  const date = new Date(timestamp)
+  const uid = (res.locals.user as User).id
+  const msgs = getConnection().getRepository(Message)
+
+  const query = msgs
+    .createQueryBuilder('msg')
+    .leftJoinAndSelect('msg.sender', 'sender')
+    .leftJoinAndSelect('msg.receiver', 'receiver')
+    .where('sender.id = :uid', { uid: uid })
+    .andWhere('receiver.id = :rid', { rid: receiverId })
+    .select('msg.id')
+    .addSelect('msg.type')
+    .addSelect('msg.content')
+    .addSelect('msg.time')
+    // .leftJoinAndSelect('user.sent_msgs', 'message')
+    // // .where('message.receiver = :id', { id: receiverId })
+    // .where('user.id = :uid', { uid: uid })
+    // .select('sent_msgs')
+
+  if (date instanceof Date && !isNaN(date.getTime())) {
+    const results = await query
+      .andWhere('message.time > :date', { date: date.getTime() })
+      .getMany()
+    return res.status(200).json(results)
+  } else {
+    const results = await query.getMany()
+    console.log(results)
+    return res.status(200).json(results)
+  }
+})
+
 // Get all messages or some messages since some time
 // http get params
 // since: number (should provide me a timestamp with unit of millisecond`second * 1000`)
