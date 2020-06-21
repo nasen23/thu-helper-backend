@@ -137,6 +137,14 @@ router.get('/message', checkJWT, async (req, res) => {
   }
 })
 
+// get user who had a conversation with me
+router.get('/list', checkJWT, async (req, res) => {
+  const user = res.locals.user as User
+  const users = getConnection().getRepository(User)
+  const result = await users.findOne(user.id, { relations: ['talkedUsers'] })
+  return res.json(result)
+})
+
 // chat history with another user
 router.get('/:uid(\\d+)', checkJWT, async (req, res) => {
   const user = res.locals.user as User
