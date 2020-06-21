@@ -67,7 +67,7 @@ router.get(
     })
 
     if (task) {
-      if (req.query['browsing']) {
+      if (req.query['browsing'] === '') {
         task.view_count++
       }
       await tasks.save(task)
