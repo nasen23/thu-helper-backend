@@ -31,9 +31,11 @@ wss.on('connection', (ws, req) => {
   connections.set(user.id, ws)
   ws.on('message', async (msg: string) => {
     try {
+      console.log(msg)
       const json = JSON.parse(msg)
       const info = plainToClass(WsMessage, json)
       await validateOrReject(info)
+      console.log(info)
       // find proper user to send to
       const users = getConnection().getRepository(User)
       const receiver = await users.findOne(info.to)
@@ -44,15 +46,24 @@ wss.on('connection', (ws, req) => {
       const message = new Message()
       message.sender = user
       message.receiver = receiver
-      message.time = Date.now().toString()
+      message.time = info.time
       message.content = info.content
       message.type = MessageType[info.type]
       messages.save(message)
 
       const toWs = connections.get(info.to)
+      console.log(1)
       // send if the receiver is currently online
       if (toWs) {
-        toWs.send({ from: user.id, type: info.type, content: info.content })
+        console.log(2)
+        toWs.send({
+          id: message.id,
+          from: user.id,
+          senderName: user.username,
+          type: info.type,
+          content: info.content,
+          time: info.time,
+         })
       }
     } catch (err) {
       return
@@ -107,6 +118,7 @@ router.get('/message', checkJWT, async (req, res) => {
   const timestamp = req.query['since'] as string
   const date = new Date(timestamp)
   const user = res.locals.user as User
+  console.log(req.query)
   const users = getConnection().getRepository(User)
   if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
@@ -119,6 +131,7 @@ router.get('/message', checkJWT, async (req, res) => {
       .addSelect('user.username')
       .addSelect('message')
       .getMany()
+    console.log(results)
     return res.json(results)
   } else {
     const results = await users
@@ -129,6 +142,7 @@ router.get('/message', checkJWT, async (req, res) => {
       .addSelect('user.username')
       .addSelect('message')
       .getMany()
+    console.log(results)
     return res.json(results)
   }
 })

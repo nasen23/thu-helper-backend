@@ -106,4 +106,6 @@ export class WsMessage {
 
   // plain text or base64 encoded image
   content: string
+
+  time: string
 }

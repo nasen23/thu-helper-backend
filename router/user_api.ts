@@ -10,6 +10,7 @@ import { urlencoded } from 'body-parser'
 import * as path from 'path'
 import { staticDir } from '../config'
 import { Task } from '../entity/task'
+import * as fs from 'fs'
 
 const router = Router()
 
@@ -58,9 +59,10 @@ router.post('/login', urlencoded({ extended: true }), async (req, res) => {
   if (user) {
     if (user.password === sha256(data.password)) {
       const jwt = new JWT(user)
+      delete user.password
       return res.status(201).json({
         token: jwt.token,
-        userId: user.id,
+        ...user
       })
     } else {
       return res.status(403).json({ error: 'Incorrect password' })
@@ -92,6 +94,7 @@ router.get('/:uid/profile', async (req, res) => {
     // return everything except password
     if (Object.keys(req.query).length !== 0) {
       let result = {}
+      result['id'] = user.id
       for (const key in req.query) {
         if (user.hasOwnProperty(key)) {
           result[key] = user[key]
@@ -109,17 +112,16 @@ router.get('/:uid/avatar', (req, res) => {
   try {
     const id = parseInt(req.params['uid'])
     const filename = id.toString() + '.png'
-    return res.sendFile(
-      filename,
-      {
-        root: path.join(staticDir, 'avatar'),
-      },
-      err => {
-        if (err) {
-          res.status(404).json({ error: 'Avatar not found' })
+    if (fs.existsSync(path.join(staticDir, 'avatar', filename))) {
+      return res.sendFile(
+        filename,
+        {
+          root: path.join(staticDir, 'avatar'),
         }
-      }
-    )
+      )
+    } else {
+      return res.sendStatus(404)
+    }
   } catch (err) {
     console.log(err)
     return res.status(400).json({ error: 'Invalid request params' })
@@ -208,10 +210,10 @@ router.post('/forget-pwd', urlencoded({ extended: true }), async (req, res) => {
   const user = await userRepo.findOne({ phone: data.phone })
   if (user) {
     const jwt = new JWT(user)
+    delete user.password
     return res.status(201).json({
       token: jwt.token,
-      userId: user.id,
-      username: user.username
+      ...user
     })
   } else {
     return res.status(404).json({ err: 'User does not exist' })
