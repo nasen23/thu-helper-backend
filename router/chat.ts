@@ -44,7 +44,7 @@ wss.on('connection', (ws, req) => {
       const message = new Message()
       message.sender = user
       message.receiver = receiver
-      message.time = Date.now().toString()
+      message.time = info.time
       message.content = info.content
       message.type = MessageType[info.type]
       await messages.save(message)
