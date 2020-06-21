@@ -6,6 +6,7 @@ import {
   RelationId,
   ManyToMany,
   JoinTable,
+  ManyToOne,
 } from 'typeorm'
 import { Task } from './task'
 import { Message } from './message'
@@ -72,12 +73,10 @@ export class User {
   @JoinTable()
   rewarded_tasks: Task[]
 
-  @ManyToMany(() => Message, message => message.sender, { cascade: true })
-  @JoinTable()
+  @OneToMany(() => Message, message => message.sender)
   sent_msgs: Message[]
 
-  @ManyToMany(() => Message, message => message.receiver, { cascade: true })
-  @JoinTable()
+  @OneToMany(() => Message, message => message.receiver)
   received_msgs: Message[]
 
   // timestamp of the last avatar modification time
