@@ -109,7 +109,8 @@ router.get(
       query = query.take(n)
     }
     const result = await query.getMany()
-    return res.json(result)
+    console.log(result)
+    return res.json({ tasks: result })
   }
 )
 

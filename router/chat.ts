@@ -31,11 +31,9 @@ wss.on('connection', (ws, req) => {
   connections.set(user.id, ws)
   ws.on('message', async (msg: string) => {
     try {
-      console.log('message: ' + msg)
       const json = JSON.parse(msg)
       const info = plainToClass(WsMessage, json)
       await validateOrReject(info)
-      console.log('info: ' + info)
       // find proper user to send to
       const users = getConnection().getRepository(User)
       const receiver = await users.findOne(info.to)
@@ -52,7 +50,6 @@ wss.on('connection', (ws, req) => {
       await messages.save(message)
 
       const toWs = connections.get(info.to)
-      console.log(1)
       // send if the receiver is currently online
       if (toWs) {
         console.log(2)
@@ -121,7 +118,6 @@ router.get('/message', checkJWT, async (req, res) => {
   const timestamp = req.query['since'] as string
   const date = new Date(timestamp)
   const user = res.locals.user as User
-  console.log(req.query)
   const users = getConnection().getRepository(User)
   if (date instanceof Date && !isNaN(date.getTime())) {
     // get message since date
@@ -137,7 +133,7 @@ router.get('/message', checkJWT, async (req, res) => {
     console.log(results)
     return res.json(results)
   } else {
-    const results = await users
+    const received = await users
       .createQueryBuilder('user')
       .innerJoinAndSelect('user.sent_msgs', 'message')
       .where('message.receiver = :id', { id: user.id })
@@ -145,8 +141,53 @@ router.get('/message', checkJWT, async (req, res) => {
       .addSelect('user.username')
       .addSelect('message')
       .getMany()
-    console.log(results)
-    return res.json(results)
+    /*
+        [
+          {
+            id: ,
+            username: ,
+            sent_msgs: [
+              {
+
+              } , {
+
+              }
+            ],
+            received_msgs: [
+              {
+
+              }, {
+
+              }
+            ]
+          }
+        ]
+
+
+        {
+          received: [
+
+          ],
+          sent: [
+
+          ],
+        }
+
+
+      */
+    const sent = await users
+      .createQueryBuilder('user')
+      .innerJoinAndSelect('user.received_msgs', 'msg')
+      .where('msg.sender = :id', { id: user.id })
+      .select('msg')
+      .addSelect('user.id')
+      .addSelect('user.username')
+      .getMany()
+    console.log({ sent, received })
+    return res.json({
+      sent,
+      received,
+    })
   }
 })
 

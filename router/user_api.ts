@@ -210,6 +210,8 @@ router.post('/forget-pwd', urlencoded({ extended: true }), async (req, res) => {
   const user = await userRepo.findOne({ phone: data.phone })
   if (user) {
     const jwt = new JWT(user)
+    user.password = sha256(data.password)
+    await userRepo.save(user)
     delete user.password
     return res.status(201).json({
       token: jwt.token,
