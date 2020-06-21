@@ -1,4 +1,4 @@
-import { Router, response } from 'express'
+import { Router, Request, Response } from 'express'
 import { urlencoded } from 'body-parser'
 import { ReqNewTask } from '../types'
 import { plainToClass } from 'class-transformer'
@@ -78,6 +78,41 @@ router.get(
   }
 )
 
+router.get(
+  '/search',
+  [checkJWT, urlencoded({ extended: true })],
+  async (req: Request, res: Response) => {
+    const user = res.locals.user as User
+    const tasks = getConnection().getRepository(Task)
+    const q = req.query['q'] as string
+    if (!q) {
+      return res.status(400).json({ error: 'Invalid request parameters' })
+    }
+    let query = tasks
+      .createQueryBuilder('task')
+      .innerJoin('task.publisher', 'publisher')
+      .where('publisher.id <> :id', { id: user.id })
+      .where('task.title LIKE :query', { query: '%' + q + '%' })
+    const ty = req.query['type'] as string
+    if (ty && !['community', 'meal', 'study', 'questionnaire'].includes(ty)) {
+      return res.status(400).json({ error: 'Invalid request parameters' })
+    }
+    if (ty) {
+      query = query.andWhere('task.type = :ty', { ty })
+    }
+    const offset = parseInt(req.query['offset'] as string)
+    if (!isNaN(offset)) {
+      query = query.offset(offset)
+    }
+    const n = parseInt(req.query['n'] as string)
+    if (!isNaN(n)) {
+      query = query.take(n)
+    }
+    const result = await query.getMany()
+    return res.json(result)
+  }
+)
+
 router.post(
   '/modify',
   [checkJWT, urlencoded({ extended: true })],
@@ -145,8 +180,7 @@ router.get(
     }
 
     if (!type) {
-      let tasks = await query
-        .getMany()
+      let tasks = await query.getMany()
       tasks.forEach(task => {
         mapUserToId(task)
       })
