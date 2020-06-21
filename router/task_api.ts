@@ -13,7 +13,7 @@ const router = Router()
 
 function hasEnded(task: Task): boolean {
   return (
-    task.end_time >= new Date().toString() ||
+    task.end_time <= Date.now().toString() ||
     task.times_finished >= task.times_total
   )
 }
