@@ -46,10 +46,10 @@ wss.on('connection', (ws, req) => {
       const message = new Message()
       message.sender = user
       message.receiver = receiver
-      message.time = info.time
+      message.time = Date.now().toString()
       message.content = info.content
       message.type = MessageType[info.type]
-      messages.save(message)
+      await messages.save(message)
 
       const toWs = connections.get(info.to)
       console.log(1)
@@ -62,10 +62,11 @@ wss.on('connection', (ws, req) => {
           senderName: user.username,
           type: info.type,
           content: info.content,
-          time: info.time,
-         })
+          time: message.time,
+        })
       }
     } catch (err) {
+      console.log(err)
       return
     }
   })
@@ -94,10 +95,10 @@ router.get('/sent', checkJWT, async (req, res) => {
     .addSelect('msg.type')
     .addSelect('msg.content')
     .addSelect('msg.time')
-    // .leftJoinAndSelect('user.sent_msgs', 'message')
-    // // .where('message.receiver = :id', { id: receiverId })
-    // .where('user.id = :uid', { uid: uid })
-    // .select('sent_msgs')
+  // .leftJoinAndSelect('user.sent_msgs', 'message')
+  // // .where('message.receiver = :id', { id: receiverId })
+  // .where('user.id = :uid', { uid: uid })
+  // .select('sent_msgs')
 
   if (date instanceof Date && !isNaN(date.getTime())) {
     const results = await query
