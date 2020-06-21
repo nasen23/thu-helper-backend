@@ -31,11 +31,11 @@ wss.on('connection', (ws, req) => {
   connections.set(user.id, ws)
   ws.on('message', async (msg: string) => {
     try {
-      console.log(msg)
+      console.log('message: ' + msg)
       const json = JSON.parse(msg)
       const info = plainToClass(WsMessage, json)
       await validateOrReject(info)
-      console.log(info)
+      console.log('info: ' + info)
       // find proper user to send to
       const users = getConnection().getRepository(User)
       const receiver = await users.findOne(info.to)
