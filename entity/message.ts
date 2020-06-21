@@ -1,10 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm'
+import { Entity, PrimaryGeneratedColumn, Column, ManyToMany } from 'typeorm'
 import { User } from './user'
 
 export enum MessageType {
@@ -17,11 +11,10 @@ export class Message {
   @PrimaryGeneratedColumn()
   id: number
 
-  @ManyToOne(() => User, user => user.sent_msgs)
-  @JoinColumn({ name: 'senderId' })
+  @ManyToMany(() => User, user => user.sent_msgs)
   sender: User
 
-  @ManyToOne(() => User, user => user.received_msgs)
+  @ManyToMany(() => User, user => user.received_msgs)
   receiver: User
 
   @Column('enum', { enum: MessageType })
