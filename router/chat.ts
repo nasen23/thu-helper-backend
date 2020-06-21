@@ -56,14 +56,16 @@ wss.on('connection', (ws, req) => {
       // send if the receiver is currently online
       if (toWs) {
         console.log(2)
-        toWs.send({
-          id: message.id,
-          from: user.id,
-          senderName: user.username,
-          type: info.type,
-          content: info.content,
-          time: message.time,
-        })
+        toWs.send(
+          JSON.stringify({
+            id: message.id,
+            from: user.id,
+            senderName: user.username,
+            type: info.type,
+            content: info.content,
+            time: message.time,
+          })
+        )
       }
     } catch (err) {
       console.log(err)
