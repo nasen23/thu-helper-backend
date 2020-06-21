@@ -52,15 +52,17 @@ wss.on('connection', (ws, req) => {
       const toWs = connections.get(info.to)
       // send if the receiver is currently online
       if (toWs) {
-        console.log('message: ' + msg)
-        toWs.send({
-          id: message.id,
-          from: user.id,
-          senderName: user.username,
-          type: info.type,
-          content: info.content,
-          time: message.time,
-        })
+        console.log(2)
+        toWs.send(
+          JSON.stringify({
+            id: message.id,
+            from: user.id,
+            senderName: user.username,
+            type: info.type,
+            content: info.content,
+            time: message.time,
+          })
+        )
       }
     } catch (err) {
       console.log(err)
@@ -139,7 +141,7 @@ router.get('/message', checkJWT, async (req, res) => {
       .addSelect('user.username')
       .addSelect('message')
       .getMany()
-      /*
+    /*
         [
           {
             id: ,
@@ -180,10 +182,11 @@ router.get('/message', checkJWT, async (req, res) => {
       .select('msg')
       .addSelect('user.id')
       .addSelect('user.username')
-      .getMany();
+      .getMany()
     console.log({ sent, received })
     return res.json({
-      sent, received
+      sent,
+      received,
     })
   }
 })
