@@ -39,6 +39,9 @@ router.post(
     const publisher = res.locals.user as User
 
     data['publisher'] = publisher
+    if (data.type == 'meal') {
+      data.times_total = 1
+    }
 
     const tasks = getConnection().getRepository(Task)
     const task = tasks.create(data)
