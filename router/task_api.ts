@@ -67,7 +67,7 @@ router.get(
     })
 
     if (task) {
-      if (req.query['browsing']) {
+      if (req.query['browsing'] === '') {
         task.view_count++
       }
       await tasks.save(task)
@@ -109,8 +109,7 @@ router.get(
       query = query.take(n)
     }
     const result = await query.getMany()
-    console.log(result)
-    return res.json({ tasks: result })
+    return res.json({ tasks: result.filter(task => !hasEnded(task)) })
   }
 )
 

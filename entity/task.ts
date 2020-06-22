@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, ManyToMany } from 'typeorm'
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  ManyToMany,
+} from 'typeorm'
 import { User } from './user'
 
 @Entity()
@@ -8,7 +14,7 @@ export class Task {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ length: 10 })
+  @Column({ length: 20 })
   type: string
 
   @Column({ length: 20 })
@@ -45,7 +51,7 @@ export class Task {
   publisherId: number
 
   @ManyToOne(type => User, publisher => publisher.published_tasks, {
-    cascade: true
+    cascade: true,
   })
   publisher: User
 
