@@ -10,6 +10,7 @@ import {
 } from 'typeorm'
 import { Task } from './task'
 import { Message } from './message'
+import { CONNECTING } from 'ws'
 
 export enum OnlineState {
   busy = 'busy',
@@ -57,6 +58,13 @@ export class User {
 
   @Column({ length: 50, nullable: true })
   email: string
+
+  @ManyToMany(() => User, user => user.followings)
+  @JoinTable()
+  followers: User[]
+
+  @ManyToMany(() => User, user => user.followers)
+  followings: User[]
 
   @OneToMany(() => Task, task => task.publisher)
   published_tasks: Task[]

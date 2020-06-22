@@ -83,12 +83,15 @@ router.get('/:uid/profile', async (req, res) => {
   const users = getConnection().getRepository(User)
   const user = await users.findOne(uid, {
     relations: [
+      'followers',
+      'followings',
       'doing_tasks',
       'failed_tasks',
       'rewarded_tasks',
       'moderating_tasks',
     ],
   })
+  console.log(user)
   delete user.password
   if (user) {
     // return everything except password
@@ -257,7 +260,6 @@ router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (re
 router.post('/online-state', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
   const user = res.locals.user as User
   const state = req.body['state'] as string
-  console.log(state)
   const userRepo = getConnection().getRepository(User)
 
   if (state !== 'busy' && state !== 'online' && state !== 'offline') {
@@ -266,6 +268,75 @@ router.post('/online-state', [checkJWT, urlencoded({ extended: true })], async (
   user.state = OnlineState[state]
   await userRepo.save(user)
   return res.sendStatus(201)
+})
+
+router.post('/follow', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const otherId = parseInt(req.body['id'])
+  const myId = (res.locals.user as User).id
+  const userRepo = getConnection().getRepository(User)
+  const me = await userRepo.findOne(myId, {
+    relations: ['followers', 'followings']
+  })
+  const other = await userRepo.findOne(otherId, {
+    relations: ['followers', 'followings']
+  })
+
+  if (!other) {
+    return res.sendStatus(404)
+  }
+  console.log('---before---')
+  console.log('other: ', other)
+  console.log('me: ', me)
+  other.followers.push(me)
+  me.followings.push(other)
+  await userRepo.save(me)
+  await userRepo.save(other)
+  console.log('---after---')
+  console.log('other: ', other)
+  console.log('me: ', me)
+  return res.sendStatus(201)
+})
+
+router.post('/unfollow', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const otherId = parseInt(req.body['id'])
+  const myId = (res.locals.user as User).id
+  const userRepo = getConnection().getRepository(User)
+  const me = await userRepo.findOne(myId, {
+    relations: ['followers', 'followings']
+  })
+  const other = await userRepo.findOne(otherId, {
+    relations: ['followers', 'followings']
+  })
+
+  if (!other) {
+    return res.sendStatus(404)
+  }
+  const myIdx = me.followings.findIndex(user => user.id == otherId)
+  const otherIdx = other.followers.findIndex(user => user.id == myId)
+  if (otherIdx == -1 || myIdx == -1) {
+    return res.sendStatus(400)
+  }
+  other.followers.splice(otherIdx, 1)
+  me.followings.splice(myIdx, 1)
+  await userRepo.save(me)
+  await userRepo.save(other)
+  return res.sendStatus(201)
+})
+
+router.get('/follow-state', [urlencoded({ extended: true })], async (req, res) => {
+  const uid = parseInt(req.query['id'])
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne(uid, {
+    relations: ['followers', 'followings']
+  })
+
+  if (!user) {
+    return res.status(404).json({ error: 'User not found' })
+  }
+  return res.status(201).json({
+    followersNum: user.followers.length,
+    followingsNum: user.followings.length
+  })
 })
 
 export default router
