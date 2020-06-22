@@ -174,6 +174,7 @@ router.get(
       .leftJoinAndSelect('task.failed_users', 'failed_users')
       .leftJoinAndSelect('task.rewarded_users', 'rewarded_users')
       .leftJoinAndSelect('task.moderating_users', 'moderating_users')
+      .orderBy('RANDOM()')
       .where('(task.end_time) > (:now)', { now: Date.now().toString() })
       .andWhere('task.publisherId != :uid', { uid: uid })
 
