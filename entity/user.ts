@@ -11,6 +11,12 @@ import {
 import { Task } from './task'
 import { Message } from './message'
 
+export enum OnlineState {
+  busy = 'busy',
+  online = 'online',
+  offline = 'offline'
+}
+
 @Entity()
 export class User {
   @PrimaryGeneratedColumn()
@@ -21,6 +27,12 @@ export class User {
 
   @Column({ length: 64 })
   password: string
+
+  @Column('enum', {
+    enum: OnlineState,
+    default: OnlineState.online
+  })
+  state: OnlineState
 
   @Column({ length: 11 })
   phone: string

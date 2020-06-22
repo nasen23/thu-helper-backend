@@ -1,4 +1,4 @@
-import { User } from '../entity/user'
+import { User, OnlineState } from '../entity/user'
 import { Router } from 'express'
 import { getConnection } from 'typeorm'
 import { ReqRegister, ReqLogin } from '../types'
@@ -252,6 +252,20 @@ router.get('/task-states', [checkJWT, urlencoded({ extended: true })], async (re
     published_done,
     published_doing
   })
+})
+
+router.post('/online-state', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const user = res.locals.user as User
+  const state = req.body['state'] as string
+  console.log(state)
+  const userRepo = getConnection().getRepository(User)
+
+  if (state !== 'busy' && state !== 'online' && state !== 'offline') {
+    return res.status(400).json({ error: 'Invalid online state '})
+  }
+  user.state = OnlineState[state]
+  await userRepo.save(user)
+  return res.sendStatus(201)
 })
 
 export default router
