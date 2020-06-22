@@ -11,6 +11,7 @@ import * as path from 'path'
 import { staticDir } from '../config'
 import { Task } from '../entity/task'
 import * as fs from 'fs'
+import { url } from 'inspector'
 
 const router = Router()
 
@@ -284,16 +285,10 @@ router.post('/follow', [checkJWT, urlencoded({ extended: true })], async (req, r
   if (!other) {
     return res.sendStatus(404)
   }
-  console.log('---before---')
-  console.log('other: ', other)
-  console.log('me: ', me)
   other.followers.push(me)
   me.followings.push(other)
   await userRepo.save(me)
   await userRepo.save(other)
-  console.log('---after---')
-  console.log('other: ', other)
-  console.log('me: ', me)
   return res.sendStatus(201)
 })
 
@@ -337,6 +332,23 @@ router.get('/follow-state', [urlencoded({ extended: true })], async (req, res) =
     followersNum: user.followers.length,
     followingsNum: user.followings.length
   })
+})
+
+router.get('/relations', [checkJWT, urlencoded({ extended: true })], async (req, res) => {
+  const uid = (res.locals.user as User).id
+  const relation = req.query['relation']
+  const userRepo = getConnection().getRepository(User)
+  const user = await userRepo.findOne(uid, {
+    relations: ['followers', 'followings']
+  })
+
+  if (!relation || (relation !== 'followers' && relation !== 'followings')) {
+    return res.status(400).json({ error: 'Must specify relation' })
+  }
+  if (relation === 'followers') {
+    return res.status(200).json(user.followers)
+  }
+   return res.status(200).json(user.followings)
 })
 
 export default router
